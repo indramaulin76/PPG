@@ -1,0 +1,177 @@
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue';
+import { useForm, Link } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import Button from '@/Components/UI/Button.vue';
+import Input from '@/Components/UI/Input.vue';
+import Select from '@/Components/UI/Select.vue';
+import Card from '@/Components/UI/Card.vue';
+
+const props = defineProps({
+    jamaah: Object,
+    desas: Array,
+    kelompoks: Array,
+});
+
+const form = useForm({
+    kelompok_id: props.jamaah.kelompok_id || '',
+    nama_lengkap: props.jamaah.nama_lengkap || '',
+    tgl_lahir: props.jamaah.tgl_lahir || '',
+    jenis_kelamin: props.jamaah.jenis_kelamin || '',
+    status_pernikahan: props.jamaah.status_pernikahan || '',
+    pendidikan_aktivitas: props.jamaah.pendidikan_aktivitas || '',
+    no_telepon: props.jamaah.no_telepon || '',
+    role_dlm_keluarga: props.jamaah.role_dlm_keluarga || '',
+});
+
+// Find initial desa from kelompok
+const findDesaId = () => {
+    if (props.jamaah.kelompok_id) {
+        const kelompok = props.kelompoks.find(k => k.id == props.jamaah.kelompok_id);
+        return kelompok?.desa_id || '';
+    }
+    return '';
+};
+
+const selectedDesa = ref(findDesaId());
+
+const filteredKelompoks = computed(() => {
+    if (!selectedDesa.value) return [];
+    return props.kelompoks.filter(k => k.desa_id == selectedDesa.value);
+});
+
+watch(selectedDesa, (newVal, oldVal) => {
+    if (oldVal !== '') {
+        form.kelompok_id = '';
+    }
+});
+
+const submit = () => {
+    form.put(route('jamaah.update', props.jamaah.id));
+};
+
+const genderOptions = [
+    { value: 'L', label: 'Laki-laki' },
+    { value: 'P', label: 'Perempuan' },
+];
+
+const statusOptions = [
+    { value: 'BELUM', label: 'Belum Menikah' },
+    { value: 'MENIKAH', label: 'Menikah' },
+    { value: 'JANDA', label: 'Janda' },
+    { value: 'DUDA', label: 'Duda' },
+];
+
+const roleOptions = [
+    { value: 'KEPALA', label: 'Kepala Keluarga' },
+    { value: 'ISTRI', label: 'Istri' },
+    { value: 'ANAK', label: 'Anak' },
+    { value: 'LAINNYA', label: 'Lainnya' },
+];
+</script>
+
+<template>
+    <AppLayout title="Edit Jamaah">
+        <template #header>
+            Edit Data Jamaah
+        </template>
+
+        <div class="max-w-3xl">
+            <Card title="Form Edit Jamaah">
+                <form @submit.prevent="submit" class="space-y-6">
+                    <!-- Wilayah -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select
+                            v-model="selectedDesa"
+                            label="Desa"
+                            :options="desas"
+                            option-value="id"
+                            option-label="nama_desa"
+                            placeholder="Pilih Desa"
+                            required
+                        />
+                        <Select
+                            v-model="form.kelompok_id"
+                            label="Kelompok"
+                            :options="filteredKelompoks"
+                            option-value="id"
+                            option-label="nama_kelompok"
+                            placeholder="Pilih Kelompok"
+                            :error="form.errors.kelompok_id"
+                            required
+                        />
+                    </div>
+
+                    <!-- Identitas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            v-model="form.nama_lengkap"
+                            label="Nama Lengkap"
+                            placeholder="Masukkan nama lengkap"
+                            :error="form.errors.nama_lengkap"
+                            required
+                        />
+                        <Input
+                            v-model="form.tgl_lahir"
+                            type="date"
+                            label="Tanggal Lahir"
+                            :error="form.errors.tgl_lahir"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select
+                            v-model="form.jenis_kelamin"
+                            label="Jenis Kelamin"
+                            :options="genderOptions"
+                            placeholder="Pilih L/P"
+                            :error="form.errors.jenis_kelamin"
+                            required
+                        />
+                        <Select
+                            v-model="form.status_pernikahan"
+                            label="Status Pernikahan"
+                            :options="statusOptions"
+                            placeholder="Pilih Status"
+                            :error="form.errors.status_pernikahan"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            v-model="form.pendidikan_aktivitas"
+                            label="Pendidikan/Aktivitas"
+                            placeholder="SD, SMP, Bekerja, dll"
+                            :error="form.errors.pendidikan_aktivitas"
+                        />
+                        <Input
+                            v-model="form.no_telepon"
+                            label="No. Telepon"
+                            placeholder="08xxxxxxxxxx"
+                            :error="form.errors.no_telepon"
+                        />
+                    </div>
+
+                    <Select
+                        v-model="form.role_dlm_keluarga"
+                        label="Peran dalam Keluarga"
+                        :options="roleOptions"
+                        placeholder="Pilih Peran"
+                        :error="form.errors.role_dlm_keluarga"
+                    />
+
+                    <template #footer>
+                        <div class="flex items-center justify-end gap-3">
+                            <Link :href="route('jamaah.index')">
+                                <Button type="button" variant="secondary">Batal</Button>
+                            </Link>
+                            <Button type="submit" variant="primary" :loading="form.processing">
+                                Simpan Perubahan
+                            </Button>
+                        </div>
+                    </template>
+                </form>
+            </Card>
+        </div>
+    </AppLayout>
+</template>
