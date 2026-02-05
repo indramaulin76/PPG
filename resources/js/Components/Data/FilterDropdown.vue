@@ -15,6 +15,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    dropdowns: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const emit = defineEmits(['update:modelValue', 'filter']);
@@ -25,6 +29,9 @@ const filters = ref({
     jenis_kelamin: props.modelValue.jenis_kelamin || '',
     status_pernikahan: props.modelValue.status_pernikahan || '',
     kategori_usia: props.modelValue.kategori_usia || '',
+    kelas_generus: props.modelValue.kelas_generus || '',
+    kategori_sodaqoh: props.modelValue.kategori_sodaqoh || '',
+    status_mubaligh: props.modelValue.status_mubaligh || '',
 });
 
 // Filter kelompoks based on selected desa
@@ -50,9 +57,17 @@ const clearFilters = () => {
         jenis_kelamin: '',
         status_pernikahan: '',
         kategori_usia: '',
+        kelas_generus: '',
+        kategori_sodaqoh: '',
+        status_mubaligh: '',
     };
     emit('update:modelValue', { ...filters.value });
     emit('filter');
+};
+
+const formatDropdownOptions = (items) => {
+    if (!items) return [];
+    return items.map(item => ({ value: item, label: item }));
 };
 
 const genderOptions = [
@@ -89,7 +104,7 @@ const usiaOptions = [
                 Reset
             </button>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <Select
                 v-model="filters.desa_id"
                 :options="desas"
@@ -118,6 +133,21 @@ const usiaOptions = [
                 v-model="filters.kategori_usia"
                 :options="usiaOptions"
                 placeholder="Kategori Usia"
+            />
+            <Select
+                v-model="filters.kelas_generus"
+                :options="formatDropdownOptions(dropdowns.kelas_generus)"
+                placeholder="Kelas Generus"
+            />
+            <Select
+                v-model="filters.kategori_sodaqoh"
+                :options="formatDropdownOptions(dropdowns.kategori_sodaqoh)"
+                placeholder="Kategori Ekonomi"
+            />
+            <Select
+                v-model="filters.status_mubaligh"
+                :options="formatDropdownOptions(dropdowns.status_mubaligh)"
+                placeholder="Status Mubaligh"
             />
         </div>
         <div class="flex justify-end mt-3">

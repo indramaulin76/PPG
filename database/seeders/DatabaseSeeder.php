@@ -15,6 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            UserSeeder::class,
+        ]);
+        
         // Buat data dummy untuk testing
         
         // 1. Buat Desa

@@ -70,7 +70,10 @@ class JamaahCSVImportService
 
     private function processRow($row, $rowNumber)
     {
-        if (empty($row['nama_jamaah'])) {
+        // Flexible column mapping (support both formats)
+        $namaLengkap = $row['NAMA LENGKAP'] ?? $row['nama_jamaah'] ?? null;
+        
+        if (empty($namaLengkap)) {
             return;
         }
 
@@ -82,10 +85,18 @@ class JamaahCSVImportService
             Jamaah::create([
                 'kelompok_id' => $kelompokId,
                 'keluarga_id' => $keluargaId,
-                'nama_lengkap' => $row['nama_jamaah'],
-                'jenis_kelamin' => $this->parseGender($row['jenis_kelamin'] ?? 'L'),
-                'tgl_lahir' => $this->parseDate($row['tgl_lahir'] ?? null),
-                'status_pernikahan' => $this->parseMaritalStatus($row['status_pernikahan'] ?? 'BELUM'),
+                'nama_lengkap' => $namaLengkap,
+                'tempat_lahir' => $row['TEMPAT LAHIR'] ?? $row['tempat_lahir'] ?? null,
+                'jenis_kelamin' => $this->parseGender($row['JENIS KELAMIN'] ?? $row['jenis_kelamin'] ?? 'L'),
+                'tgl_lahir' => $this->parseDate($row['TANGGAL LAHIR'] ?? $row['tgl_lahir'] ?? null),
+                'kelas_generus' => $row['KELAS GENERUS'] ?? $row['kelas_generus'] ?? null,
+                'status_pernikahan' => $this->parseMaritalStatus($row['STATUS PERNIKAHAN'] ?? $row['status_pernikahan'] ?? 'BELUM'),
+                'kategori_sodaqoh' => $row['KATAGORI SODAQOH'] ?? $row['kategori_sodaqoh'] ?? null,
+                'dapukan' => $row['DAPUKAN'] ?? $row['dapukan'] ?? null,
+                'pekerjaan' => $row['PEKERJAAN'] ?? $row['pekerjaan'] ?? null,
+                'status_mubaligh' => $row['DEWAN GURU'] ?? $row['status_mubaligh'] ?? null,
+                'pendidikan_terakhir' => $row['PENDIDIKAN TERAKHIR'] ?? $row['pendidikan_terakhir'] ?? null,
+                'minat_kbm' => $row['KBM YANG DIMINATI'] ?? $row['minat_kbm'] ?? null,
                 'pendidikan_aktivitas' => $row['pendidikan'] ?? null,
                 'no_telepon' => $row['no_hp'] ?? null,
                 'role_dlm_keluarga' => $this->parseFamilyRole($row['status_keluarga'] ?? 'LAINNYA'),
@@ -101,7 +112,7 @@ class JamaahCSVImportService
 
     private function handleDesa($row)
     {
-        $namaDesa = strtoupper(trim($row['desa'] ?? 'LAINNYA'));
+        $namaDesa = strtoupper(trim($row['DESA'] ?? $row['desa'] ?? 'LAINNYA'));
         if (!isset($this->desas[$namaDesa])) {
             $desa = Desa::create(['nama_desa' => $namaDesa]);
             $this->desas[$namaDesa] = $desa->id;
@@ -111,7 +122,7 @@ class JamaahCSVImportService
 
     private function handleKelompok($desaId, $row)
     {
-        $namaKelompok = strtoupper(trim($row['kelompok'] ?? 'UMUM'));
+        $namaKelompok =strtoupper(trim($row['KELOMPOK'] ?? $row['kelompok'] ?? 'UMUM'));
         $kelompokKey = $desaId . '-' . $namaKelompok;
 
         if (!isset($this->kelompoks[$kelompokKey])) {
@@ -148,10 +159,27 @@ class JamaahCSVImportService
     private function parseDate($val)
     {
         if (empty($val)) return null;
+        
         try {
-            return Carbon::parse($val)->format('Y-m-d');
+            // Try d/m/Y format (Indonesian)
+            return Carbon::createFromFormat('d/m/Y', trim($val))->format('Y-m-d');
         } catch (\Exception $e) {
-            return null;
+            try {
+                // Try m/d/Y format (US)
+                return Carbon::createFromFormat('m/d/Y', trim($val))->format('Y-m-d');
+            } catch (\Exception $e2) {
+                try {
+                    // Try standard Carbon parse
+                    $parsed = Carbon::parse(trim($val));
+                    // Validate year (reject obviously wrong years)
+                    if ($parsed->year < 1900 || $parsed->year > date('Y')) {
+                        return null;
+                    }
+                    return $parsed->format('Y-m-d');
+                } catch (\Exception $e3) {
+                    return null;
+                }
+            }
         }
     }
 
@@ -176,9 +204,9 @@ class JamaahCSVImportService
     public function getCSVTemplate()
     {
         return [
-            'nama_jamaah,desa,kelompok,jenis_kelamin,tgl_lahir,status_pernikahan,no_kk,no_hp,status_keluarga,alamat,pendidikan',
-            'Ahmad Budiman,SUKAMAJU,TARBIYAH,L,1990-05-15,MENIKAH,3201011234567890,08123456789,KEPALA,Jl. Merdeka No. 1,S1',
-            'Siti Nurhaliza,SUKAMAJU,MUSLIMAH,P,1992-08-22,MENIKAH,3201011234567890,08234567890,ISTRI,Jl. Merdeka No. 1,S1',
+            'DESA,KELOMPOK,NAMA LENGKAP,TEMPAT LAHIR,TANGGAL LAHIR,JENIS KELAMIN,KELAS GENERUS,STATUS PERNIKAHAN,KATAGORI SODAQOH,DAPUKAN,PEKERJAAN,DEWAN GURU,PENDIDIKAN TERAKHIR,KBM YANG DIMINATI',
+            'JATI,JATI LAMA,Ahmad Budiman,Jakarta,15/05/1990,L,PEMUDA,MENIKAH,AGNIYA,Ketua RT,Wiraswasta,MT,S1,Tahfidz',
+            'JATI,JATI BARU,Siti Nurhaliza,Bandung,22/08/1992,P,PRA NIKAH,BELUM MENIKAH,CALON AGNIYA,Sekretaris,Guru,MS,S1,Tahsin',
         ];
     }
 }

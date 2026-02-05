@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\ShareAuthUser::class,
         ]);
+        
+        // Register role-based access control middleware
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckAdminLevel::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

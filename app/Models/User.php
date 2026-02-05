@@ -23,6 +23,8 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'desa_id',
+        'kelompok_id',
     ];
 
     /**
@@ -40,6 +42,8 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    protected $appends = ['scope_label'];
+
     protected function casts(): array
     {
         return [
@@ -48,19 +52,104 @@ class User extends Authenticatable
             'is_active' => 'boolean',
         ];
     }
+    
+    // ... constants and relations ...
 
+    // ============================================
+    // Accessors
+    // ============================================
+    public function getScopeLabelAttribute(): string
+    {
+        return $this->getScopeLabel();
+    }
+
+    // ============================================
+    // Role Constants (3-Tier Admin System)
+    // ============================================
+    const ROLE_SUPER_ADMIN = 'super_admin';
+    const ROLE_ADMIN_DESA = 'admin_desa';
+    const ROLE_ADMIN_KELOMPOK = 'admin_kelompok';
+
+    // ============================================
+    // Relationships
+    // ============================================
+    public function desa()
+    {
+        return $this->belongsTo(Desa::class);
+    }
+
+    public function kelompok()
+    {
+        return $this->belongsTo(Kelompok::class);
+    }
+
+    // ============================================
+    // Role Helper Methods
+    // ============================================
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isAdminDesa(): bool
+    {
+        return $this->role === self::ROLE_ADMIN_DESA;
+    }
+
+    public function isAdminKelompok(): bool
+    {
+        return $this->role === self::ROLE_ADMIN_KELOMPOK;
+    }
+
+    /**
+     * Check if this user can manage another user
+     */
+    public function canManageUser(User $user): bool
+    {
+        // Super admin can manage everyone
+        if ($this->isSuperAdmin()) return true;
+        
+        // Admin Desa can manage Admin Kelompok in their desa
+        if ($this->isAdminDesa() && $user->isAdminKelompok()) {
+            return $user->desa_id === $this->desa_id;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get scope label for display (e.g., "Desa Jati", "Kelompok Jati Lama")
+     */
+    public function getScopeLabel(): string
+    {
+        if ($this->isSuperAdmin()) {
+            return 'Seluruh Sistem';
+        } elseif ($this->isAdminDesa()) {
+            return 'Desa ' . ($this->desa?->nama_desa ?? 'N/A');
+        } elseif ($this->isAdminKelompok()) {
+            return 'Kelompok ' . ($this->kelompok?->nama_kelompok ?? 'N/A');
+        }
+        return 'N/A';
+    }
+
+    /**
+     * Legacy compatibility - kept for backward compatibility
+     * @deprecated Use isSuperAdmin() instead
+     */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->isSuperAdmin();
     }
 
-    public function isOperator(): bool
-    {
-        return $this->role === 'operator';
-    }
-
+    /**
+     * Check if user can access dashboard (any active admin)
+     */
     public function canAccessDashboard(): bool
     {
-        return $this->is_active && in_array($this->role, ['admin', 'operator']);
+        return $this->is_active && in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN_DESA,
+            self::ROLE_ADMIN_KELOMPOK
+        ]);
     }
 }

@@ -22,3 +22,14 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Docker volumes and cache
+/docker/mysql/
+/docker/redis/
+.env.local
+.env.*.local
+
+# Utility/debug scripts (contain sensitive operations)
+verify_passwords.php
+check_users.php
+test_*.php

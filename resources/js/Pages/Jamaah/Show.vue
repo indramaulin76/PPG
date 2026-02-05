@@ -11,16 +11,26 @@ const props = defineProps({
 
 const infoItems = [
     { label: 'Nama Lengkap', key: 'nama_lengkap' },
-    { label: 'Jenis Kelamin', key: 'jenis_kelamin', badge: true },
+    { label: 'Tempat Lahir', key: 'tempat_lahir' },
     { label: 'Tanggal Lahir', key: 'tgl_lahir' },
     { label: 'Umur', key: 'age', suffix: ' tahun' },
+    { label: 'Jenis Kelamin', key: 'jenis_kelamin', badge: true },
     { label: 'Kategori Usia', key: 'kategori_usia', badge: true },
     { label: 'Status Pernikahan', key: 'status_pernikahan', badge: true },
-    { label: 'Pendidikan/Aktivitas', key: 'pendidikan_aktivitas' },
-    { label: 'No. Telepon', key: 'no_telepon' },
     { label: 'Peran dalam Keluarga', key: 'role_dlm_keluarga' },
+    { label: 'No. Telepon', key: 'no_telepon' },
     { label: 'Desa', key: 'desa' },
     { label: 'Kelompok', key: 'kelompok' },
+    { label: '---', key: 'divider1', divider: true },
+    { label: 'Kelas Generus', key: 'kelas_generus' },
+    { label: 'Status Mubaligh', key: 'status_mubaligh' },
+    { label: 'Kategori Ekonomi', key: 'kategori_sodaqoh' },
+    { label: '---', key: 'divider2', divider: true },
+    { label: 'Pendidikan Terakhir', key: 'pendidikan_terakhir' },
+    { label: 'Pekerjaan', key: 'pekerjaan' },
+    { label: 'Dapukan Organisasi', key: 'dapukan' },
+    { label: 'Minat KBM', key: 'minat_kbm' },
+    { label: 'Pendidikan/Aktivitas (Legacy)', key: 'pendidikan_aktivitas' },
 ];
 </script>
 

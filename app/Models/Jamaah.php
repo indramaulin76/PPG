@@ -12,9 +12,17 @@ class Jamaah extends Model
         'kelompok_id',
         'keluarga_id',
         'nama_lengkap',
+        'tempat_lahir',
         'tgl_lahir',
         'jenis_kelamin',
+        'kelas_generus',
         'status_pernikahan',
+        'kategori_sodaqoh',
+        'dapukan',
+        'pekerjaan',
+        'status_mubaligh',
+        'pendidikan_terakhir',
+        'minat_kbm',
         'pendidikan_aktivitas',
         'no_telepon',
         'role_dlm_keluarga',
@@ -22,6 +30,32 @@ class Jamaah extends Model
 
     protected $casts = [
         'tgl_lahir' => 'date',
+    ];
+
+    // DEFINISI OPSI DROPDOWN (Single Source of Truth)
+    const STATUS_PERNIKAHAN = ['BELUM', 'MENIKAH', 'JANDA', 'DUDA'];
+    
+    const KELAS_GENERUS = [
+        'CABE RAWIT',
+        'PRA REMAJA',
+        'REMAJA',
+        'PRA NIKAH',
+        'USIA NIKAH',
+        'LANSIA'
+    ];
+    
+    const KATEGORI_SODAQOH = ['AGNIYA', 'CALON AGNIYA', 'DHUAFA', 'PENERIMA'];
+    
+    const STATUS_MUBALIGH = ['MT', 'MS', 'ASISTEN', 'NON-MUBALIGH'];
+    
+    const PENDIDIKAN = [
+        'SD',
+        'SMP',
+        'SMA/SMK',
+        'DIPLOMA',
+        'SARJANA (S1)',
+        'MAGISTER (S2)',
+        'DOKTOR (S3)'
     ];
 
     /**
@@ -119,7 +153,9 @@ class Jamaah extends Model
      */
     public function scopeSearch($query, $keyword)
     {
-        return $query->where('nama_lengkap', 'LIKE', "%{$keyword}%");
+        // Safe parameter binding to prevent SQL injection
+        $searchTerm = '%' . $keyword . '%';
+        return $query->where('nama_lengkap', 'LIKE', $searchTerm);
     }
 
     /**

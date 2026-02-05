@@ -10,14 +10,16 @@ class UserSeeder extends Seeder{
     {
         User::updateOrCreate(
             ['email' => 'admin@jemaah.com'],
-            ['name' => 'Admin Jemaah'],
-            ['password' => 'bcrypt('admin123')],
-            ['role' => 'admin'],
-            ['is_active' => true,
+            [
+                'name' => 'Admin Jemaah',
+                'password' => bcrypt('admin123'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
         );
 
-        echo "✅ User seeder berhasil dijalankan!";
-        echo "Admin: " . User::where('role', 'admin')->count();
-        echo "Operator: " . User::where('role', 'operator')->count();
+        echo "✅ User seeder berhasil dijalankan!\n";
+        echo "Admin: " . User::where('role', 'admin')->count() . "\n";
+        echo "Operator: " . User::where('role', 'operator')->count() . "\n";
     }
 }

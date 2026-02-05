@@ -14,6 +14,7 @@ const props = defineProps({
     filters: Object,
     desas: Array,
     kelompoks: Array,
+    dropdowns: Object,
 });
 
 const search = ref(props.filters?.search || '');
@@ -23,6 +24,9 @@ const filterValues = ref({
     jenis_kelamin: props.filters?.jenis_kelamin || '',
     status_pernikahan: props.filters?.status_pernikahan || '',
     kategori_usia: props.filters?.kategori_usia || '',
+    kelas_generus: props.filters?.kelas_generus || '',
+    kategori_sodaqoh: props.filters?.kategori_sodaqoh || '',
+    status_mubaligh: props.filters?.status_mubaligh || '',
 });
 
 const showDeleteModal = ref(false);
@@ -119,6 +123,7 @@ const deleteJamaah = () => {
                 v-model="filterValues"
                 :desas="desas"
                 :kelompoks="kelompoks"
+                :dropdowns="dropdowns"
                 @filter="applyFilters"
             />
 

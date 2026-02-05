@@ -14,13 +14,34 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Total counts
-        $totalJamaah = Jamaah::count();
-        $totalKK = Jamaah::whereNotNull('keluarga_id')->distinct('keluarga_id')->count('keluarga_id');
-        $totalDesa = Desa::count();
+        $user = auth()->user();
+        
+        // ===== SCOPE DATA BASED ON ROLE =====
+        $jamaahQuery = Jamaah::query();
+        
+        if ($user->isAdminDesa()) {
+            // Admin Desa: only see data from their desa
+            $jamaahQuery->whereHas('kelompok', fn($q) => $q->where('desa_id', $user->desa_id));
+        } elseif ($user->isAdminKelompok()) {
+            // Admin Kelompok: only see data from their kelompok
+            $jamaahQuery->where('kelompok_id', $user->kelompok_id);
+        }
+        // Super Admin: no filter, sees everything
+        
+        // Total counts (scoped)
+        $totalJamaah = $jamaahQuery->count();
+        $totalKK = (clone $jamaahQuery)->whereNotNull('keluarga_id')->distinct('keluarga_id')->count('keluarga_id');
+        $totalDesa = $user->isSuperAdmin() ? Desa::count() : 1;
+        
+        $totalKelompok = match(true) {
+            $user->isSuperAdmin() => Kelompok::count(),
+            $user->isAdminDesa() => Kelompok::where('desa_id', $user->desa_id)->count(),
+            $user->isAdminKelompok() => 1,
+            default => 0,
+        };
 
-        // Gender ratio
-        $genderCounts = Jamaah::select('jenis_kelamin', DB::raw('count(*) as total'))
+        // Gender ratio (scoped)
+        $genderCounts = (clone $jamaahQuery)->select('jenis_kelamin', DB::raw('count(*) as total'))
             ->groupBy('jenis_kelamin')
             ->pluck('total', 'jenis_kelamin');
         
@@ -30,26 +51,31 @@ class DashboardController extends Controller
         $malePercent = $totalGender > 0 ? round(($maleCount / $totalGender) * 100) : 50;
         $femalePercent = 100 - $malePercent;
 
-        // Age distribution
-        $now = Carbon::now();
-        $ageDistribution = [
-            'BALITA' => Jamaah::whereBetween('tgl_lahir', [$now->copy()->subYears(5), $now])->count(),
-            'ANAK' => Jamaah::whereBetween('tgl_lahir', [$now->copy()->subYears(12), $now->copy()->subYears(6)])->count(),
-            'REMAJA' => Jamaah::whereBetween('tgl_lahir', [$now->copy()->subYears(17), $now->copy()->subYears(13)])->count(),
-            'PEMUDA' => Jamaah::whereBetween('tgl_lahir', [$now->copy()->subYears(40), $now->copy()->subYears(18)])->count(),
-            'DEWASA' => Jamaah::whereBetween('tgl_lahir', [$now->copy()->subYears(60), $now->copy()->subYears(41)])->count(),
-            'LANSIA' => Jamaah::where('tgl_lahir', '<', $now->copy()->subYears(60))->count(),
-        ];
+        // Age distribution (scoped)
+        $ageDistribution = (clone $jamaahQuery)->selectRaw('
+            CASE 
+                WHEN TIMESTAMPDIFF(YEAR, tgl_lahir, CURDATE()) <= 5 THEN "BALITA"
+                WHEN TIMESTAMPDIFF(YEAR, tgl_lahir, CURDATE()) <= 12 THEN "ANAK"
+                WHEN TIMESTAMPDIFF(YEAR, tgl_lahir, CURDATE()) <= 17 THEN "REMAJA"
+                WHEN TIMESTAMPDIFF(YEAR, tgl_lahir, CURDATE()) <= 40 THEN "PEMUDA"
+                WHEN TIMESTAMPDIFF(YEAR, tgl_lahir, CURDATE()) <= 60 THEN "DEWASA"
+                WHEN tgl_lahir IS NOT NULL THEN "LANSIA"
+                ELSE "TIDAK_DIKETAHUI"
+            END as age_group, COUNT(*) as count')
+            ->whereNotNull('tgl_lahir')
+            ->groupBy('age_group')
+            ->pluck('count', 'age_group')
+            ->toArray();
 
-        // Marital status distribution
-        $maritalDistribution = Jamaah::select('status_pernikahan', DB::raw('count(*) as total'))
+        // Marital status distribution (scoped)
+        $maritalDistribution = (clone $jamaahQuery)->select('status_pernikahan', DB::raw('count(*) as total'))
             ->whereNotNull('status_pernikahan')
             ->groupBy('status_pernikahan')
             ->pluck('total', 'status_pernikahan')
             ->toArray();
 
-        // Recent data (5 terbaru)
-        $recentJamaah = Jamaah::with(['kelompok.desa'])
+        // Recent data (5 terbaru, scoped)
+        $recentJamaah = (clone $jamaahQuery)->with(['kelompok.desa'])
             ->latest()
             ->take(5)
             ->get()
@@ -62,11 +88,20 @@ class DashboardController extends Controller
                 'umur' => $j->age,
             ]);
 
-        return Inertia::render('Dashboard', [
+        // Determine view based on role
+        $view = match(true) {
+            $user->isSuperAdmin() => 'Dashboard/SuperAdmin',
+            $user->isAdminDesa() => 'Dashboard/AdminDesa',
+            $user->isAdminKelompok() => 'Dashboard/AdminKelompok',
+            default => 'Dashboard',
+        };
+
+        return Inertia::render($view, [
             'stats' => [
                 'totalJamaah' => $totalJamaah,
                 'totalKK' => $totalKK,
                 'totalDesa' => $totalDesa,
+                'totalKelompok' => $totalKelompok,
                 'genderRatio' => "{$malePercent}:{$femalePercent}",
             ],
             'ageDistribution' => $ageDistribution,
