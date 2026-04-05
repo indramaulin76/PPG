@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\JamaahCSVImportService;
 use App\Services\JamaahCSVExportService;
+use App\Services\JamaahCSVImportService;
+use App\Services\JamaahExcelExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,123 +17,153 @@ class ImportController extends Controller
 
     public function import(Request $request)
     {
-        // Enhanced file validation for security
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240'
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ]);
 
         try {
             $file = $request->file('file');
-            
-            // Additional security checks
-            if (!$file->isValid()) {
+
+            if (! $file->isValid()) {
                 throw new \Exception('File upload tidak valid');
             }
 
-            // Verify file content is actually CSV (not just extension)
-            $fileContent = file_get_contents($file->getPathname());
-            if (!$this->isValidCSVContent($fileContent)) {
-                throw new \Exception('File content bukan format CSV yang valid');
-            }
-
-            // Sanitize filename to prevent directory traversal
             $originalName = $file->getClientOriginalName();
             $sanitizedName = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $originalName);
-            $fileName = time() . '_' . $sanitizedName;
+            $fileName = time().'_'.$sanitizedName;
             $filePath = $file->storeAs('imports', $fileName);
 
             $fullPath = Storage::disk('local')->path($filePath);
-            $importService = new JamaahCSVImportService();
+            $importService = new JamaahCSVImportService;
             $result = $importService->import($fullPath);
 
             Storage::delete($filePath);
 
-            return back()->with([
-                'success' => 'Import berhasil!',
-                'result' => $result
-            ]);
+            if ($result['success_count'] == 0 && $result['error_count'] > 0) {
+                session()->flash('error', 'Import gagal! Tidak ada data yang berhasil diimport.');
+                session()->flash('result', $result);
+            } elseif ($result['success_count'] == 0 && $result['skipped_count'] > 0) {
+                session()->flash('error', 'Import gagal! Semua baris dilewati karena format header tidak sesuai. Pastikan kolom "NAMA LENGKAP" ada di file.');
+                session()->flash('result', $result);
+            } else {
+                $message = 'Import berhasil! '.$result['success_count'].' data berhasil diimport.';
+                if ($result['skipped_count'] > 0) {
+                    $message .= ' ('.$result['skipped_count'].' baris dilewati karena data kosong)';
+                }
+                if ($result['error_count'] > 0) {
+                    $message .= ' ('.$result['error_count'].' baris gagal)';
+                }
+                session()->flash('success', $message);
+                session()->flash('result', $result);
+            }
+
+            return back();
         } catch (\Exception $e) {
-            // Clean up file on error
             if (isset($filePath)) {
                 Storage::delete($filePath);
             }
-            
-            return back()->withErrors([
-                'file' => 'Import gagal: ' . $e->getMessage()
-            ]);
+
+            session()->flash('error', 'Import gagal: '.$e->getMessage());
+
+            return back();
         }
     }
 
-    /**
-     * Validate file content to ensure it's proper CSV
-     * Supports both old format (lowercase) and new format from Plan.md (uppercase Indonesian)
-     */
-    private function isValidCSVContent($content)
+    public function downloadTemplate(Request $request)
     {
-        // Check if content contains expected CSV structure
-        $lines = explode("\n", $content);
-        if (count($lines) < 2) {
-            return false; // At least header + 1 data row
-        }
+        $delimiter = $request->get('delimiter', ';');
+        $delimiter = ($delimiter === ',') ? ',' : ';';
 
-        // Basic CSV format check
-        $header = str_getcsv($lines[0]);
-        
-        // Map of equivalent headers (old format => new format alternatives)
-        $headerMappings = [
-            'nama_lengkap' => ['nama_lengkap', 'nama lengkap'],
-            'tgl_lahir' => ['tgl_lahir', 'tanggal lahir', 'tanggal_lahir'],
-            'jenis_kelamin' => ['jenis_kelamin', 'jenis kelamin'],
-        ];
-        
-        // Normalize headers: lowercase, trim, replace underscores with spaces
-        $headerNormalized = array_map(function($h) {
-            return strtolower(trim(str_replace('_', ' ', $h)));
-        }, $header);
-        
-        // Check if header contains at least one variation of each required field
-        foreach ($headerMappings as $field => $variations) {
-            $found = false;
-            foreach ($variations as $variation) {
-                $variationNormalized = strtolower(str_replace('_', ' ', $variation));
-                if (in_array($variationNormalized, $headerNormalized)) {
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                return false;
-            }
-        }
+        $importService = new JamaahCSVImportService;
+        $content = $importService->generateCSVTemplate($delimiter);
 
-        // Check if data rows have correct column count
-        $expectedColumns = count($header);
-        for ($i = 1; $i < min(6, count($lines)); $i++) { // Check first 5 data rows
-            if (!empty(trim($lines[$i]))) {
-                $dataRow = str_getcsv($lines[$i]);
-                if (count($dataRow) !== $expectedColumns) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    public function downloadTemplate()
-    {
-        $importService = new JamaahCSVImportService();
-        $template = $importService->getCSVTemplate();
-
-        $fileName = 'template_import_jamaah.csv';
-        $content = implode("\n", $template);
+        $delimiterName = $delimiter === ';' ? 'semicolon' : 'comma';
+        $fileName = 'template_import_jamaah_'.$delimiterName.'.csv';
 
         return response($content)
             ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+            ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
+    }
+
+    public function downloadTemplateExcel()
+    {
+        $importService = new JamaahCSVImportService;
+        $templateData = $importService->getCSVTemplate();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Import Jamaah');
+
+        $headers = $templateData['headers'];
+        $columnLetter = 'A';
+
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E3F2FD'],
+            ],
+        ];
+
+        foreach ($headers as $header) {
+            $sheet->setCellValue($columnLetter.'1', $header);
+            $sheet->getStyle($columnLetter.'1')->applyFromArray($headerStyle);
+            $columnLetter++;
+        }
+
+        $row = 2;
+        foreach ([$templateData['sample1'], $templateData['sample2']] as $sample) {
+            $col = 'A';
+            foreach ($sample as $value) {
+                $sheet->setCellValue($col.$row, $value);
+                $col++;
+            }
+            $row++;
+        }
+
+        foreach (range('A', chr(64 + count($headers))) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'template_import_jamaah.xlsx';
+        $response = response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$fileName.'"');
+
+        return $response;
     }
 
     public function export(Request $request)
+    {
+        $delimiter = $request->get('delimiter', ';');
+        $delimiter = ($delimiter === ',') ? ',' : ';';
+
+        $filters = $request->only([
+            'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan',
+            'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh', 'search',
+        ]);
+
+        try {
+            $exportService = new JamaahCSVExportService($filters, $delimiter);
+            $jamaahs = $exportService->export();
+            $csvContent = $exportService->mapToCSV($jamaahs);
+            $fileName = $exportService->generateFilename();
+
+            return response($csvContent)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', 'attachment; filename="'.$fileName.'"');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Export gagal: '.$e->getMessage());
+
+            return back();
+        }
+    }
+
+    public function exportExcel(Request $request)
     {
         $filters = $request->only([
             'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan',
@@ -140,18 +171,23 @@ class ImportController extends Controller
         ]);
 
         try {
-            $exportService = new JamaahCSVExportService($filters);
-            $jamaahs = $exportService->export();
-            $csvContent = $exportService->mapToCSV($jamaahs);
+            $exportService = new JamaahExcelExportService($filters);
+            $spreadsheet = $exportService->export();
             $fileName = $exportService->generateFilename();
 
-            return response($csvContent)
-                ->header('Content-Type', 'text/csv')
-                ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+            $response = response()->streamDownload(function () use ($spreadsheet) {
+                $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+                $writer->save('php://output');
+            });
+
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->headers->set('Content-Disposition', 'attachment; filename="'.$fileName.'"');
+
+            return $response;
         } catch (\Exception $e) {
-            return back()->withErrors([
-                'export' => 'Export gagal: ' . $e->getMessage()
-            ]);
+            session()->flash('error', 'Export Excel gagal: '.$e->getMessage());
+
+            return back();
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Desa;
 use App\Models\Kelompok;
 use App\Models\Keluarga;
 use App\Models\Jamaah;
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
@@ -31,6 +32,16 @@ class DatabaseSeeder extends Seeder
         foreach ($desas as $desaData) {
             $desa = Desa::create($desaData);
             
+            // Buat Akun Admin Desa
+            User::create([
+                'name' => 'Admin Desa ' . $desa->nama_desa,
+                'username' => 'admindesa_' . strtolower(str_replace(' ', '', $desa->nama_desa)),
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_ADMIN_DESA,
+                'desa_id' => $desa->id,
+                'is_active' => true,
+            ]);
+            
             // 2. Buat Kelompok untuk setiap desa
             $kelompoks = [
                 $desa->kelompoks()->create(['nama_kelompok' => $desaData['nama_desa'] . ' TIMUR']),
@@ -39,6 +50,17 @@ class DatabaseSeeder extends Seeder
             
             // 3. Buat Keluarga dan Jamaah untuk testing
             foreach ($kelompoks as $kelompok) {
+                // Buat Akun Admin Kelompok
+                User::create([
+                    'name' => 'Admin Kelompok ' . $kelompok->nama_kelompok,
+                    'username' => 'adminklp_' . strtolower(str_replace(' ', '', $kelompok->nama_kelompok)),
+                    'password' => bcrypt('password'),
+                    'role' => User::ROLE_ADMIN_KELOMPOK,
+                    'desa_id' => $desa->id,
+                    'kelompok_id' => $kelompok->id,
+                    'is_active' => true,
+                ]);
+
                 for ($i = 1; $i <= 3; $i++) {
                     $keluarga = Keluarga::create([
                         'no_kk' => fake()->numerify('33########'),
@@ -94,9 +116,11 @@ class DatabaseSeeder extends Seeder
         }
         
         $this->command->info('✅ Dummy data berhasil dibuat!');
+        $this->command->info('Total User: ' . User::count());
         $this->command->info('Total Desa: ' . Desa::count());
         $this->command->info('Total Kelompok: ' . Kelompok::count());
         $this->command->info('Total Keluarga: ' . Keluarga::count());
         $this->command->info('Total Jamaah: ' . Jamaah::count());
     }
 }
+

@@ -37,7 +37,7 @@ class HandleInertiaRequests extends Middleware
     {
         $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
         $appName = $settings['app_name'] ?? 'SI - JEMAAH';
-        $appLogo = isset($settings['app_logo']) ? asset('storage/' . $settings['app_logo']) : null;
+        $appLogo = isset($settings['app_logo']) ? asset('storage/'.$settings['app_logo']) : null;
 
         return [
             ...parent::share($request),
@@ -50,6 +50,11 @@ class HandleInertiaRequests extends Middleware
                 'app_name' => $appName,
                 'app_logo' => $appLogo,
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'result' => fn () => $request->session()->get('result'),
         ];
     }
 }

@@ -16,7 +16,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Jamaah bulk delete (Super Admin only)
-    Route::middleware(['role:super_admin'])->group(function() {
+    Route::middleware(['role:super_admin'])->group(function () {
         Route::delete('jamaah/destroy-all', [JamaahController::class, 'destroyAll'])->name('jamaah.destroy-all');
     });
 
@@ -67,8 +67,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');
         Route::post('/', [ImportController::class, 'import'])->name('store');
         Route::get('/template', [ImportController::class, 'downloadTemplate'])->name('template');
+        Route::get('/template/excel', [ImportController::class, 'downloadTemplateExcel'])->name('template.excel');
     });
 
-    // Export CSV - all admin levels (scoped data)
+    // Export Jamaah - all admin levels (scoped data)
     Route::get('/export/jamaah', [ImportController::class, 'export'])->name('export.jamaah');
+    Route::get('/export/jamaah/excel', [ImportController::class, 'exportExcel'])->name('export.jamaah.excel');
 }); // End of auth middleware group

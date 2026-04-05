@@ -31,6 +31,7 @@ const filterValues = ref({
 
 const showDeleteModal = ref(false);
 const showDeleteAllModal = ref(false);
+const isExportMenuOpen = ref(false);
 const deleteId = ref(null);
 const deleteName = ref('');
 
@@ -74,6 +75,35 @@ const deleteAllJamaah = () => {
         },
     });
 };
+
+const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
+    // Ambil nilai mentahnya dulu agar Vue tidak bingung saat re-render
+    const currentSearch = search.value;
+    const currentFilters = { ...filterValues.value };
+
+    const params = {
+        search: currentSearch,
+        ...currentFilters,
+        delimiter: delimiter,
+        format: format
+    };
+    
+    // Bersihkan parameter yang kosong agar URL tidak terlalu panjang
+    Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === null || params[key] === undefined) {
+            delete params[key];
+        }
+    });
+
+    // Gunakan helper route() jika tersedia, jika gagal gunakan fallback manual
+    try {
+        return route(format === 'excel' ? 'export.jamaah.excel' : 'export.jamaah', params);
+    } catch (e) {
+        const searchParams = new URLSearchParams(params);
+        const baseUrl = format === 'excel' ? '/export/jamaah/excel' : '/export/jamaah';
+        return `${baseUrl}?${searchParams.toString()}`;
+    }
+};
 </script>
 
 <template>
@@ -102,22 +132,29 @@ const deleteAllJamaah = () => {
                     </div>
                     
                     <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                        <a :href="route('export.jamaah', filterValues)" class="shrink-0">
-                            <Button variant="secondary" size="sm" class="!rounded-xl">
-                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                Export
-                            </Button>
+                        <!-- Export Buttons -->
+                        <a 
+                            :href="getExportUrl('excel')" 
+                            class="shrink-0 inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-xl hover:bg-blue-200 transition-all border border-blue-200"
+                        >
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Export Excel
                         </a>
-                        <button v-if="$page.props.auth.user.role === 'super_admin'" @click="showDeleteAllModal = true" class="shrink-0">
-                            <Button variant="danger" size="sm" class="!rounded-xl shadow-lg shadow-red-100">
-                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                Kosongkan Data
-                            </Button>
-                        </button>
+                        
+                        <Button 
+                            v-if="$page.props.auth.user.role === 'super_admin'" 
+                            variant="danger" 
+                            size="sm" 
+                            class="!rounded-xl shadow-lg shadow-red-100 shrink-0"
+                            @click="showDeleteAllModal = true"
+                        >
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Kosongkan Data
+                        </Button>
                         <Link :href="route('jamaah.create')" class="shrink-0">
                             <Button variant="primary" size="sm" class="!rounded-xl shadow-lg shadow-blue-100">
                                 <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

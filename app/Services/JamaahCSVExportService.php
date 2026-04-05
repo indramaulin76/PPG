@@ -9,9 +9,12 @@ class JamaahCSVExportService
 {
     private $filters = [];
 
-    public function __construct(array $filters = [])
+    private $delimiter = ';';
+
+    public function __construct(array $filters = [], string $delimiter = ';')
     {
         $this->filters = $filters;
+        $this->delimiter = $delimiter;
     }
 
     public function export(): Collection
@@ -38,8 +41,7 @@ class JamaahCSVExportService
                 return $query->where('status_mubaligh', $mubaligh);
             });
 
-        // Filter by Paket (groups of kelas_generus)
-        if (!empty($this->filters['paket'])) {
+        if (! empty($this->filters['paket'])) {
             $paket = $this->filters['paket'];
             $paketMapping = [
                 'PAUD' => ['PAUD'],
@@ -57,8 +59,7 @@ class JamaahCSVExportService
             }
         }
 
-        // Filter by age category
-        if (!empty($this->filters['kategori_usia'])) {
+        if (! empty($this->filters['kategori_usia'])) {
             $kategori = $this->filters['kategori_usia'];
             $ranges = [
                 'BALITA' => [0, 5],
@@ -72,9 +73,8 @@ class JamaahCSVExportService
                 $query->byUsia($ranges[$kategori][0], $ranges[$kategori][1]);
             }
         }
-        
-        // Filter by search text
-        if (!empty($this->filters['search'])) {
+
+        if (! empty($this->filters['search'])) {
             $query->search($this->filters['search']);
         }
 
@@ -84,43 +84,39 @@ class JamaahCSVExportService
     public function getHeadings(): array
     {
         return [
-            'ID',
-            'Nama Lengkap',
-            'Tempat Lahir',
-            'Jenis Kelamin',
-            'Tanggal Lahir',
-            'Umur',
-            'Kelas Generus',
-            'Status Pernikahan',
-            'Kategori Sodaqoh',
-            'Dapukan',
-            'Pekerjaan',
-            'Status Mubaligh',
-            'Pendidikan Terakhir',
-            'Minat KBM',
-            'Desa',
-            'Kelompok',
-            'No. Telepon',
-            'Pendidikan Aktivitas',
-            'Role Keluarga',
-            'No. KK',
-            'Alamat'
+            'DESA',
+            'KELOMPOK',
+            'NAMA LENGKAP',
+            'TEMPAT LAHIR',
+            'TANGGAL LAHIR',
+            'JENIS KELAMIN',
+            'UMUR',
+            'PAKET',
+            'STATUS PERNIKAHAN',
+            'KATAGORI SODAQOH',
+            'DAPUKAN',
+            'PEKERJAAN',
+            'DEWAN GURU',
+            'PENDIDIKAN TERAKHIR',
+            'KBM YANG DIMINATI',
+            'NO TELEPON',
         ];
     }
 
     public function mapToCSV(Collection $jamaahs): string
     {
-        $headers = implode(',', $this->getHeadings()) . "\n";
+        $headers = implode($this->delimiter, $this->getHeadings())."\n";
         $rows = '';
 
         foreach ($jamaahs as $jamaah) {
             $row = [
-                $jamaah->id,
+                $this->escapeCSV($jamaah->kelompok->desa->nama_desa ?? ''),
+                $this->escapeCSV($jamaah->kelompok->nama_kelompok ?? ''),
                 $this->escapeCSV($jamaah->nama_lengkap),
                 $this->escapeCSV($jamaah->tempat_lahir ?? ''),
+                $jamaah->tgl_lahir ?? '',
                 $jamaah->jenis_kelamin,
-                $jamaah->tgl_lahir,
-                $jamaah->age,
+                $jamaah->age ?? '',
                 $this->escapeCSV($jamaah->kelas_generus ?? ''),
                 $jamaah->status_pernikahan,
                 $this->escapeCSV($jamaah->kategori_sodaqoh ?? ''),
@@ -129,19 +125,13 @@ class JamaahCSVExportService
                 $this->escapeCSV($jamaah->status_mubaligh ?? ''),
                 $this->escapeCSV($jamaah->pendidikan_terakhir ?? ''),
                 $this->escapeCSV($jamaah->minat_kbm ?? ''),
-                $this->escapeCSV($jamaah->kelompok->desa->nama_desa ?? ''),
-                $this->escapeCSV($jamaah->kelompok->nama_kelompok ?? ''),
                 $this->escapeCSV($jamaah->no_telepon ?? ''),
-                $this->escapeCSV($jamaah->pendidikan_aktivitas ?? ''),
-                $jamaah->role_dlm_keluarga,
-                $this->escapeCSV($jamaah->keluarga->no_kk ?? ''),
-                $this->escapeCSV($jamaah->keluarga->alamat_rumah ?? ''),
             ];
 
-            $rows .= implode(',', $row) . "\n";
+            $rows .= implode($this->delimiter, $row)."\n";
         }
 
-        return $headers . $rows;
+        return $headers.$rows;
     }
 
     private function escapeCSV(string $value): string
@@ -150,10 +140,13 @@ class JamaahCSVExportService
             return '';
         }
 
-        $value = str_replace('"', '""', $value);
+        if ($this->delimiter === ';') {
+            return '"'.str_replace('"', '""', $value).'"';
+        }
 
+        $value = str_replace('"', '""', $value);
         if (str_contains($value, ',') || str_contains($value, '"') || str_contains($value, "\n")) {
-            return '"' . $value . '"';
+            return '"'.$value.'"';
         }
 
         return $value;
@@ -161,6 +154,8 @@ class JamaahCSVExportService
 
     public function generateFilename(): string
     {
-        return 'data_jamaah_' . now()->format('Y-m-d_His') . '.csv';
+        $delimiterName = $this->delimiter === ';' ? 'semicolon' : 'comma';
+
+        return 'data_jamaah_'.$delimiterName.'_'.now()->format('Y-m-d_His').'.csv';
     }
 }
