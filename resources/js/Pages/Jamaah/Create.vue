@@ -176,16 +176,16 @@ const formatDropdownOptions = (items) => {
                     />
                     <Select
                         v-model="form.status_mubaligh"
-                        label="Status Mubaligh"
+                        label="Dewan Guru"
                         :options="formatDropdownOptions(dropdowns.status_mubaligh)"
                         placeholder="MT / MS / Asisten"
                         :error="form.errors.status_mubaligh"
                     />
                     <Select
                         v-model="form.kategori_sodaqoh"
-                        label="Kategori Ekonomi"
+                        label="Kategori Sodaqoh"
                         :options="formatDropdownOptions(dropdowns.kategori_sodaqoh)"
-                        placeholder="Agniya / Dhuafa"
+                        placeholder="Pilih Kategori"
                         :error="form.errors.kategori_sodaqoh"
                     />
                 </div>
@@ -202,24 +202,27 @@ const formatDropdownOptions = (items) => {
                             placeholder="SD / SMP / SMA / S1"
                             :error="form.errors.pendidikan_terakhir"
                         />
-                        <Input
+                        <Select
                             v-model="form.pekerjaan"
                             label="Pekerjaan"
-                            placeholder="Wiraswasta, Guru, dll"
+                            :options="formatDropdownOptions(dropdowns.pekerjaan)"
+                            placeholder="Pilih Pekerjaan"
                             :error="form.errors.pekerjaan"
                         />
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
+                        <Select
                             v-model="form.dapukan"
-                            label="Dapukan Organisasi"
-                            placeholder="Ketua RT, Sekretaris, dll"
+                            label="Dapukan"
+                            :options="formatDropdownOptions(dropdowns.dapukan)"
+                            placeholder="Pilih Dapukan"
                             :error="form.errors.dapukan"
                         />
-                        <Input
+                        <Select
                             v-model="form.minat_kbm"
-                            label="Minat / Hobi KBM"
-                            placeholder="Tahfidz, Tahsin, Kajian"
+                            label="KBM yang Diminati"
+                            :options="formatDropdownOptions(dropdowns.minat_kbm)"
+                            placeholder="Pilih KBM"
                             :error="form.errors.minat_kbm"
                         />
                     </div>

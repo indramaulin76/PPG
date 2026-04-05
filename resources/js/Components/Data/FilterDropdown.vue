@@ -29,7 +29,7 @@ const filters = ref({
     jenis_kelamin: props.modelValue.jenis_kelamin || '',
     status_pernikahan: props.modelValue.status_pernikahan || '',
     kategori_usia: props.modelValue.kategori_usia || '',
-    kelas_generus: props.modelValue.kelas_generus || '',
+    paket: props.modelValue.paket || '',
     kategori_sodaqoh: props.modelValue.kategori_sodaqoh || '',
     status_mubaligh: props.modelValue.status_mubaligh || '',
 });
@@ -57,7 +57,7 @@ const clearFilters = () => {
         jenis_kelamin: '',
         status_pernikahan: '',
         kategori_usia: '',
-        kelas_generus: '',
+        paket: '',
         kategori_sodaqoh: '',
         status_mubaligh: '',
     };
@@ -90,6 +90,16 @@ const usiaOptions = [
     { value: 'DEWASA', label: 'Dewasa (41-60 th)' },
     { value: 'LANSIA', label: 'Lansia (60+ th)' },
 ];
+
+const paketOptions = [
+    { value: 'PAUD', label: 'PAUD' },
+    { value: 'A', label: 'A (1-3 SD)' },
+    { value: 'B', label: 'B (4-6 SD)' },
+    { value: 'C', label: 'C (1-3 SMP)' },
+    { value: 'D', label: 'D (1-3 SMA/K)' },
+    { value: 'PRA_NIKAH', label: 'Pra-Nikah' },
+    { value: 'UMUM', label: 'Umum' },
+];
 </script>
 
 <template>
@@ -104,13 +114,14 @@ const usiaOptions = [
                 Reset
             </button>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Select
                 v-model="filters.desa_id"
                 :options="desas"
                 option-value="id"
                 option-label="nama_desa"
                 placeholder="Semua Desa"
+                class="w-full"
             />
             <Select
                 v-model="filters.kelompok_id"
@@ -118,36 +129,43 @@ const usiaOptions = [
                 option-value="id"
                 option-label="nama_kelompok"
                 placeholder="Semua Kelompok"
+                class="w-full"
             />
             <Select
                 v-model="filters.jenis_kelamin"
                 :options="genderOptions"
                 placeholder="L/P"
+                class="w-full"
             />
             <Select
                 v-model="filters.status_pernikahan"
                 :options="statusOptions"
                 placeholder="Status"
+                class="w-full"
             />
             <Select
                 v-model="filters.kategori_usia"
                 :options="usiaOptions"
                 placeholder="Kategori Usia"
+                class="w-full"
             />
             <Select
-                v-model="filters.kelas_generus"
-                :options="formatDropdownOptions(dropdowns.kelas_generus)"
-                placeholder="Kelas Generus"
+                v-model="filters.paket"
+                :options="paketOptions"
+                placeholder="Paket"
+                class="w-full"
             />
             <Select
                 v-model="filters.kategori_sodaqoh"
                 :options="formatDropdownOptions(dropdowns.kategori_sodaqoh)"
                 placeholder="Kategori Ekonomi"
+                class="w-full"
             />
             <Select
                 v-model="filters.status_mubaligh"
                 :options="formatDropdownOptions(dropdowns.status_mubaligh)"
                 placeholder="Status Mubaligh"
+                class="w-full"
             />
         </div>
         <div class="flex justify-end mt-3">

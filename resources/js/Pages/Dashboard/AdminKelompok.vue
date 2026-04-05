@@ -38,15 +38,13 @@ const user = usePage().props.auth?.user || {};
 <template>
     <AppLayout title="Dashboard Kelompok">
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Dashboard Kelompok
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
+                    Dashboard
                 </h2>
-                <div class="flex space-x-3">
-                    <Link :href="route('jamaah.create')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                        + Tambah Jamaah
-                    </Link>
-                </div>
+                <Link :href="route('jamaah.create')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    + Tambah Jamaah
+                </Link>
             </div>
         </template>
 
@@ -121,7 +119,10 @@ const user = usePage().props.auth?.user || {};
                                     <DataBadge :status="person.status" />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link :href="route('jamaah.edit', person.id)" class="text-blue-600 hover:text-blue-900">Edit</Link>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <Link :href="route('jamaah.show', person.id)" class="text-indigo-600 hover:text-indigo-900 font-medium">Detail</Link>
+                                        <Link :href="route('jamaah.edit', person.id)" class="text-blue-600 hover:text-blue-900 font-medium">Edit</Link>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="recentJamaah.length === 0">

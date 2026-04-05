@@ -15,6 +15,11 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard - all authenticated users
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Jamaah bulk delete (Super Admin only)
+    Route::middleware(['role:super_admin'])->group(function() {
+        Route::delete('jamaah/destroy-all', [JamaahController::class, 'destroyAll'])->name('jamaah.destroy-all');
+    });
+
     // Jamaah CRUD - all admin levels can access
     Route::resource('jamaah', JamaahController::class);
 
@@ -47,6 +52,12 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{admin}', [AdminManagementController::class, 'update'])->name('update');
             Route::delete('/{admin}', [AdminManagementController::class, 'destroy'])->name('destroy');
         });
+
+    // Web Settings - Super Admin only
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
+    });
 
     // API: Get kelompoks by desa (for dynamic dropdown)
     Route::get('/api/desa/{desa}/kelompoks', [WilayahController::class, 'getKelompoksByDesa'])->name('api.kelompoks');

@@ -16,7 +16,7 @@ class JamaahCSVExportService
 
     public function export(): Collection
     {
-        return Jamaah::with(['kelompok.desa', 'keluarga'])
+        $query = Jamaah::with(['kelompok.desa', 'keluarga'])
             ->when($this->filters['desa_id'] ?? null, function ($query, $desaId) {
                 return $query->whereHas('kelompok', function ($q) use ($desaId) {
                     $q->where('desa_id', $desaId);
@@ -31,8 +31,54 @@ class JamaahCSVExportService
             ->when($this->filters['status_pernikahan'] ?? null, function ($query, $status) {
                 return $query->where('status_pernikahan', $status);
             })
-            ->orderBy('id')
-            ->get();
+            ->when($this->filters['kategori_sodaqoh'] ?? null, function ($query, $sodaqoh) {
+                return $query->where('kategori_sodaqoh', $sodaqoh);
+            })
+            ->when($this->filters['status_mubaligh'] ?? null, function ($query, $mubaligh) {
+                return $query->where('status_mubaligh', $mubaligh);
+            });
+
+        // Filter by Paket (groups of kelas_generus)
+        if (!empty($this->filters['paket'])) {
+            $paket = $this->filters['paket'];
+            $paketMapping = [
+                'PAUD' => ['PAUD'],
+                'A' => ['KELAS 1', 'KELAS 2', 'KELAS 3'],
+                'B' => ['KELAS 4', 'KELAS 5', 'KELAS 6'],
+                'C' => ['KELAS 7', 'KELAS 8', 'KELAS 9'],
+                'D' => ['KELAS 10', 'KELAS 11', 'KELAS 12'],
+                'PRA_NIKAH' => ['MUDA-MUDI'],
+            ];
+
+            if ($paket === 'UMUM') {
+                $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
+            } elseif (isset($paketMapping[$paket])) {
+                $query->whereIn('kelas_generus', $paketMapping[$paket]);
+            }
+        }
+
+        // Filter by age category
+        if (!empty($this->filters['kategori_usia'])) {
+            $kategori = $this->filters['kategori_usia'];
+            $ranges = [
+                'BALITA' => [0, 5],
+                'ANAK' => [6, 12],
+                'REMAJA' => [13, 17],
+                'PEMUDA' => [18, 40],
+                'DEWASA' => [41, 60],
+                'LANSIA' => [61, 150],
+            ];
+            if (isset($ranges[$kategori])) {
+                $query->byUsia($ranges[$kategori][0], $ranges[$kategori][1]);
+            }
+        }
+        
+        // Filter by search text
+        if (!empty($this->filters['search'])) {
+            $query->search($this->filters['search']);
+        }
+
+        return $query->orderBy('nama_lengkap')->get();
     }
 
     public function getHeadings(): array

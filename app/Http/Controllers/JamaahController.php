@@ -51,9 +51,24 @@ class JamaahController extends Controller
             $query->byStatus($request->status_pernikahan);
         }
 
-        // Filter by kelas generus
-        if ($request->filled('kelas_generus')) {
-            $query->where('kelas_generus', $request->kelas_generus);
+        // Filter by Paket (groups of kelas_generus)
+        if ($request->filled('paket')) {
+            $paket = $request->paket;
+            $paketMapping = [
+                'PAUD' => ['PAUD'],
+                'A' => ['KELAS 1', 'KELAS 2', 'KELAS 3'],
+                'B' => ['KELAS 4', 'KELAS 5', 'KELAS 6'],
+                'C' => ['KELAS 7', 'KELAS 8', 'KELAS 9'],
+                'D' => ['KELAS 10', 'KELAS 11', 'KELAS 12'],
+                'PRA_NIKAH' => ['MUDA-MUDI'],
+            ];
+
+            if ($paket === 'UMUM') {
+                // Umum = jamaah yang sudah menikah / janda / duda
+                $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
+            } elseif (isset($paketMapping[$paket])) {
+                $query->whereIn('kelas_generus', $paketMapping[$paket]);
+            }
         }
 
         // Filter by kategori sodaqoh
@@ -88,10 +103,19 @@ class JamaahController extends Controller
             ->through(fn ($jamaah) => [
                 'id' => $jamaah->id,
                 'nama_lengkap' => $jamaah->nama_lengkap,
+                'tempat_lahir' => $jamaah->tempat_lahir,
+                'tgl_lahir' => $jamaah->tgl_lahir?->format('d/m/Y'),
                 'jenis_kelamin' => $jamaah->jenis_kelamin,
                 'age' => $jamaah->age,
                 'kategori_usia' => $jamaah->kategori_usia,
+                'kelas_generus' => $jamaah->kelas_generus,
                 'status_pernikahan' => $jamaah->status_pernikahan,
+                'kategori_sodaqoh' => $jamaah->kategori_sodaqoh,
+                'dapukan' => $jamaah->dapukan,
+                'pekerjaan' => $jamaah->pekerjaan,
+                'status_mubaligh' => $jamaah->status_mubaligh,
+                'pendidikan_terakhir' => $jamaah->pendidikan_terakhir,
+                'minat_kbm' => $jamaah->minat_kbm,
                 'no_telepon' => $jamaah->no_telepon,
                 'desa' => $jamaah->kelompok?->desa?->nama_desa,
                 'kelompok' => $jamaah->kelompok?->nama_kelompok,
@@ -99,11 +123,10 @@ class JamaahController extends Controller
 
         return Inertia::render('Jamaah/Index', [
             'jamaahs' => $jamaahs,
-            'filters' => $request->only(['search', 'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan', 'kategori_usia', 'kelas_generus', 'kategori_sodaqoh', 'status_mubaligh']),
+            'filters' => $request->only(['search', 'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan', 'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh']),
             'desas' => Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get(),
             'kelompoks' => Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get(),
             'dropdowns' => [
-                'kelas_generus' => Jamaah::KELAS_GENERUS,
                 'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
                 'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
             ],
@@ -135,6 +158,9 @@ class JamaahController extends Controller
                 'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
                 'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
                 'pendidikan' => Jamaah::PENDIDIKAN,
+                'dapukan' => Jamaah::DAPUKAN,
+                'pekerjaan' => Jamaah::PEKERJAAN_OPTIONS,
+                'minat_kbm' => Jamaah::MINAT_KBM,
             ],
         ]);
     }
@@ -246,6 +272,9 @@ class JamaahController extends Controller
                 'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
                 'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
                 'pendidikan' => Jamaah::PENDIDIKAN,
+                'dapukan' => Jamaah::DAPUKAN,
+                'pekerjaan' => Jamaah::PEKERJAAN_OPTIONS,
+                'minat_kbm' => Jamaah::MINAT_KBM,
             ],
         ]);
     }
@@ -301,5 +330,21 @@ class JamaahController extends Controller
 
         return redirect()->route('jamaah.index')
             ->with('success', 'Data jamaah berhasil dihapus.');
+    }
+
+    /**
+     * Remove all jamaahs from storage (Super Admin Only).
+     */
+    public function destroyAll()
+    {
+        $user = auth()->user();
+
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Akses ditolak. Fitur ini hanya untuk Super Admin.');
+        }
+
+        Jamaah::truncate();
+        
+        return redirect()->route('jamaah.index')->with('success', 'Seluruh data jamaah berhasil dikosongkan!');
     }
 }

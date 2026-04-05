@@ -36,27 +36,23 @@ class Jamaah extends Model
     const STATUS_PERNIKAHAN = ['BELUM', 'MENIKAH', 'JANDA', 'DUDA'];
     
     const KELAS_GENERUS = [
-        'CABE RAWIT',
-        'PRA REMAJA',
-        'REMAJA',
-        'PRA NIKAH',
-        'USIA NIKAH',
-        'LANSIA'
+        'PAUD',
+        'KELAS 1', 'KELAS 2', 'KELAS 3', 'KELAS 4', 'KELAS 5', 'KELAS 6',
+        'KELAS 7', 'KELAS 8', 'KELAS 9', 'KELAS 10', 'KELAS 11', 'KELAS 12',
+        'UMUM', 'PELAJAR', 'MUDA-MUDI',
     ];
     
-    const KATEGORI_SODAQOH = ['AGNIYA', 'CALON AGNIYA', 'DHUAFA', 'PENERIMA'];
+    const KATEGORI_SODAQOH = ['AGNIYA SUPER plus', 'AGNIYA SUPER', 'AGNIYA', 'CALON AGNIYA', 'MAHASISWA', 'PELAJAR'];
     
-    const STATUS_MUBALIGH = ['MT', 'MS', 'ASISTEN', 'NON-MUBALIGH'];
+    const DAPUKAN = ['KI', 'WAKIL KI', 'KU', 'PKU', 'PENEROBOS', 'MT', 'RUKYAH'];
+
+    const STATUS_MUBALIGH = ['MT', 'MS', 'ASISTEN'];
+
+    const PEKERJAAN_OPTIONS = ['BEKERJA', 'BELUM BEKERJA'];
     
-    const PENDIDIKAN = [
-        'SD',
-        'SMP',
-        'SMA/SMK',
-        'DIPLOMA',
-        'SARJANA (S1)',
-        'MAGISTER (S2)',
-        'DOKTOR (S3)'
-    ];
+    const PENDIDIKAN = ['SD', 'SMP', 'SMA/SMK', 'DIPLOMA', 'S1', 'S2', 'S3'];
+
+    const MINAT_KBM = ['PRAMUKA', 'PERSINAS', 'TAHFID', 'FORSGI'];
 
     /**
      * Relasi N:1 ke Kelompok

@@ -8,18 +8,18 @@ use Illuminate\Database\Seeder;
 class UserSeeder extends Seeder{
     public function run(): void
     {
+        // 1. Super Admin
         User::updateOrCreate(
-            ['email' => 'admin@jemaah.com'],
+            ['username' => 'superadmin'],
             [
-                'name' => 'Admin Jemaah',
-                'password' => bcrypt('admin123'),
-                'role' => 'admin',
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_SUPER_ADMIN,
                 'is_active' => true,
             ]
         );
 
         echo "✅ User seeder berhasil dijalankan!\n";
-        echo "Admin: " . User::where('role', 'admin')->count() . "\n";
-        echo "Operator: " . User::where('role', 'operator')->count() . "\n";
+        echo "Super Admin: " . User::where('role', User::ROLE_SUPER_ADMIN)->count() . "\n";
     }
 }

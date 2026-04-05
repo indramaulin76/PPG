@@ -84,7 +84,7 @@ const createChart = () => {
 </script>
 
 <template>
-    <div class="h-64">
+    <div class="relative w-full h-64 overflow-hidden">
         <canvas ref="chartRef"></canvas>
     </div>
 </template>

@@ -134,7 +134,10 @@ class ImportController extends Controller
 
     public function export(Request $request)
     {
-        $filters = $request->only(['desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan']);
+        $filters = $request->only([
+            'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan',
+            'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh', 'search',
+        ]);
 
         try {
             $exportService = new JamaahCSVExportService($filters);

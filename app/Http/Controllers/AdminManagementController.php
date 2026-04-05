@@ -97,7 +97,7 @@ class AdminManagementController extends Controller
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::in($user->isSuperAdmin() 
                 ? [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK]
@@ -146,7 +146,7 @@ class AdminManagementController extends Controller
         
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => ['sometimes', 'email', Rule::unique('users')->ignore($admin->id)],
+            'username' => ['sometimes', 'string', Rule::unique('users')->ignore($admin->id)],
             'password' => 'sometimes|nullable|string|min:8|confirmed',
             'is_active' => 'sometimes|boolean',
             'desa_id' => 'sometimes|nullable|exists:desas,id',

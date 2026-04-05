@@ -2,7 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-import Modal from '@/Components/Modal.vue';
+import Modal from '@/Components/UI/Modal.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -25,7 +25,7 @@ const editingAdmin = ref(null);
 // Form for Create/Edit
 const form = useForm({
     name: '',
-    email: '',
+    username: '',
     password: '',
     password_confirmation: '',
     role: '',
@@ -78,7 +78,7 @@ const openEditModal = (admin) => {
     editingAdmin.value = admin;
     form.reset();
     form.name = admin.name;
-    form.email = admin.email;
+    form.username = admin.username;
     form.role = admin.role;
     form.desa_id = admin.desa_id || '';
     form.kelompok_id = admin.kelompok_id || '';
@@ -146,20 +146,20 @@ const formatRole = (role) => {
 <template>
     <AppLayout title="Kelola Admin">
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
                     Kelola Admin
                 </h2>
                 <PrimaryButton @click="openCreateModal">
-                    + Tambah Admin
+                    + Tambah
                 </PrimaryButton>
             </div>
         </template>
 
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <!-- Toolbar -->
-            <div class="p-4 border-b border-gray-100 flex gap-4">
-                <div class="relative flex-1 max-w-md">
+            <div class="p-4 border-b border-gray-100">
+                <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -167,7 +167,7 @@ const formatRole = (role) => {
                     </div>
                     <TextInput
                         v-model="search"
-                        placeholder="Cari nama atau email..."
+                        placeholder="Cari..."
                         class="pl-10 w-full"
                     />
                 </div>
@@ -178,46 +178,55 @@ const formatRole = (role) => {
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Info</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scope (Wilayah)</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Role</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Wilayah</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Status</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-for="admin in admins.data" :key="admin.id" class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3">
                                 <div class="flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold mr-3">
+                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm mr-3 flex-shrink-0">
                                         {{ admin.name.charAt(0) }}
                                     </div>
-                                    <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ admin.name }}</div>
-                                        <div class="text-xs text-gray-500">{{ admin.email }}</div>
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-medium text-gray-900 truncate max-w-[120px]">{{ admin.name }}</div>
+                                        <div class="text-xs text-gray-500 truncate max-w-[120px] sm:hidden">{{ admin.username }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3 hidden sm:table-cell">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeColor(admin.role)">
                                     {{ formatRole(admin.role) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div v-if="admin.desa">Desa: {{ admin.desa }}</div>
-                                <div v-if="admin.kelompok">Kel: {{ admin.kelompok }}</div>
-                                <div v-if="!admin.desa && !admin.kelompok" class="text-gray-400 italic">Global</div>
+                            <td class="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
+                                <div v-if="admin.desa">{{ admin.desa }}</div>
+                                <div v-else-if="admin.kelompok">{{ admin.kelompok }}</div>
+                                <div v-else class="text-gray-400 italic">Global</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3 hidden sm:table-cell">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="admin.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                                    {{ admin.is_active ? 'Aktif' : 'Non-Aktif' }}
+                                    {{ admin.is_active ? 'Aktif' : 'Non' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                                <button @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900">Hapus</button>
+                            <td class="px-4 py-3 text-right text-sm font-medium">
+                                <button @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</button>
+                                <button @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 text-xs ml-3">Hapus</button>
                             </td>
                         </tr>
+                            <tr v-if="!admins.data || admins.data.length === 0">
+                                <td colspan="5" class="px-6 py-12 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <p class="mt-2 text-sm font-medium text-gray-500">Belum ada admin yang terdaftar</p>
+                                    <p class="mt-1 text-xs text-gray-400">Klik tombol "+ Tambah" untuk membuat admin baru</p>
+                                </td>
+                            </tr>
                     </tbody>
                 </table>
             </div>
@@ -247,22 +256,22 @@ const formatRole = (role) => {
                 </h2>
 
                 <form @submit.prevent="showCreateModal ? submitCreate() : submitEdit()">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-4">
                         <!-- Name & Email -->
-                        <div class="col-span-2">
+                        <div>
                             <InputLabel for="name" value="Nama Lengkap" />
                             <TextInput id="name" v-model="form.name" type="text" class="mt-1 block w-full" required />
                             <InputError :message="form.errors.name" class="mt-2" />
                         </div>
 
-                        <div class="col-span-2">
-                            <InputLabel for="email" value="Email" />
-                            <TextInput id="email" v-model="form.email" type="email" class="mt-1 block w-full" required />
-                            <InputError :message="form.errors.email" class="mt-2" />
+                        <div>
+                            <InputLabel for="username" value="Username" />
+                            <TextInput id="username" v-model="form.username" type="text" class="mt-1 block w-full" required />
+                            <InputError :message="form.errors.username" class="mt-2" />
                         </div>
 
                         <!-- Role Selection -->
-                        <div class="col-span-2">
+                        <div>
                             <InputLabel for="role" value="Role Admin" />
                             <select id="role" v-model="form.role" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                 <option value="" disabled>Pilih Role</option>
@@ -275,8 +284,7 @@ const formatRole = (role) => {
 
                         <!-- Scope Selection -->
                         <!-- Desa Dropdown: Visible if role is admin_desa or admin_kelompok -->
-                        <!-- If user is admin_desa, this is read-only or auto-set -->
-                        <div class="col-span-2 md:col-span-1" v-if="form.role === 'admin_desa' || form.role === 'admin_kelompok'">
+                        <div v-if="form.role === 'admin_desa' || form.role === 'admin_kelompok'">
                             <InputLabel for="desa_id" value="Desa" />
                              <select id="desa_id" v-model="form.desa_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" :disabled="desas.length === 1">
                                 <option value="">Pilih Desa</option>
@@ -288,7 +296,7 @@ const formatRole = (role) => {
                         </div>
 
                         <!-- Kelompok Dropdown: Visible if role is admin_kelompok -->
-                        <div class="col-span-2 md:col-span-1" v-if="form.role === 'admin_kelompok'">
+                        <div v-if="form.role === 'admin_kelompok'">
                             <InputLabel for="kelompok_id" value="Kelompok" />
                              <select id="kelompok_id" v-model="form.kelompok_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                 <option value="">Pilih Kelompok</option>
@@ -300,23 +308,23 @@ const formatRole = (role) => {
                         </div>
 
                         <!-- Password -->
-                        <div class="col-span-2">
+                        <div class="pt-2">
                             <hr class="my-2" />
                             <p class="text-xs text-gray-500 mb-2" v-if="showEditModal">Kosongkan jika tidak ingin mengubah password</p>
                         </div>
                         
-                        <div class="col-span-2 md:col-span-1">
+                        <div>
                             <InputLabel for="password" value="Password" />
                             <TextInput id="password" v-model="form.password" type="password" class="mt-1 block w-full" :required="showCreateModal" />
                             <InputError :message="form.errors.password" class="mt-2" />
                         </div>
 
-                        <div class="col-span-2 md:col-span-1">
+                        <div>
                             <InputLabel for="password_confirmation" value="Konfirmasi Password" />
                             <TextInput id="password_confirmation" v-model="form.password_confirmation" type="password" class="mt-1 block w-full" :required="showCreateModal" />
                         </div>
 
-                        <div class="col-span-2 flex items-center gap-2">
+                        <div class="flex items-center gap-2">
                              <input type="checkbox" id="is_active" v-model="form.is_active" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
                              <label for="is_active" class="text-sm text-gray-700">Akun Aktif</label>
                         </div>

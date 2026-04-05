@@ -35,9 +35,21 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+        $appName = $settings['app_name'] ?? 'SI - JEMAAH';
+        $appLogo = isset($settings['app_logo']) ? asset('storage/' . $settings['app_logo']) : null;
+
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'user' => $request->user() ? $request->user()->only([
+                    'id', 'name', 'email', 'role', 'is_active', 'desa_id', 'kelompok_id', 'scope_label',
+                ]) : null,
+            ],
+            'global_settings' => [
+                'app_name' => $appName,
+                'app_logo' => $appLogo,
+            ],
         ];
     }
 }

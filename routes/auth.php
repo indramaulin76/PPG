@@ -10,7 +10,7 @@ Route::middleware(['guest'])->group(function () {
 
     Route::post('/login', function (\Illuminate\Http\Request $request) {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'username' => ['required'],
             'password' => ['required'],
         ]);
 
@@ -21,7 +21,7 @@ Route::middleware(['guest'])->group(function () {
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
+            'username' => 'The provided credentials do not match our records.',
         ]);
     })->name('login.store');
 });

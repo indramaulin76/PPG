@@ -40,16 +40,18 @@ const user = usePage().props.auth?.user || {};
 <template>
     <AppLayout title="Dashboard Admin Desa">
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Dashboard Desa
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
+                Dashboard
                 </h2>
-                <div class="flex space-x-3">
-                    <Link :href="route('admin.index')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                        Kelola Admin Kelompok
+                <div class="flex flex-wrap gap-2">
+                    <Link :href="route('admin.index')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <span class="hidden sm:inline">Kelola Admin</span>
+                        <span class="sm:hidden">Admin</span>
                     </Link>
-                    <Link :href="route('wilayah.kelompok.index')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                        Kelola Kelompok
+                    <Link :href="route('wilayah.kelompok.index')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <span class="hidden sm:inline">Kelola Kelompok</span>
+                        <span class="sm:hidden">Kel.</span>
                     </Link>
                 </div>
             </div>
@@ -131,7 +133,10 @@ const user = usePage().props.auth?.user || {};
                                     <DataBadge :status="person.status" />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link :href="route('jamaah.edit', person.id)" class="text-blue-600 hover:text-blue-900">Edit</Link>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <Link :href="route('jamaah.show', person.id)" class="text-indigo-600 hover:text-indigo-900 font-medium">Detail</Link>
+                                        <Link :href="route('jamaah.edit', person.id)" class="text-blue-600 hover:text-blue-900 font-medium">Edit</Link>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="recentJamaah.length === 0">
