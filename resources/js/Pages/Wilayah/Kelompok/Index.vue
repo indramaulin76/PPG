@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
@@ -15,6 +15,7 @@ const props = defineProps({
     isAdminDesa: Boolean,
 });
 
+const userRole = computed(() => $page.props.auth?.user?.role);
 const filterDesa = ref(props.filters?.desa_id || '');
 
 watch(filterDesa, (val) => {
@@ -99,7 +100,7 @@ const deleteKelompok = () => {
                         placeholder="Filter by Desa"
                     />
                 </div>
-                <Button variant="primary" @click="openCreate">
+                <Button variant="primary" @click="openCreate" v-if="userRole === 'super_admin'">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -125,8 +126,8 @@ const deleteKelompok = () => {
                             <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.desa?.nama_desa || '-' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.jamaahs_count }}</td>
                             <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
-                                <button class="text-yellow-600 hover:text-yellow-900" @click="openEdit(kelompok)">Edit</button>
-                                <button class="text-red-600 hover:text-red-900" @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)">Hapus</button>
+                                <button v-if="userRole === 'super_admin' || userRole === 'admin_desa'" class="text-yellow-600 hover:text-yellow-900" @click="openEdit(kelompok)">Edit</button>
+                                <button v-if="userRole === 'super_admin'" class="text-red-600 hover:text-red-900" @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)">Hapus</button>
                             </td>
                         </tr>
                         <tr v-if="kelompoks.data.length === 0">

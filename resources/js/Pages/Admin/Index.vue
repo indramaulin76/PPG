@@ -17,6 +17,8 @@ const props = defineProps({
     kelompoks: Array,
 });
 
+const userRole = computed(() => $page.props.auth?.user?.role);
+
 const search = ref(props.filters.search || '');
 const filterDesa = ref(props.filters.desa_id || '');
 const showCreateModal = ref(false);
@@ -137,7 +139,7 @@ const formatRole = (role) => {
                 <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
                     Kelola Admin
                 </h2>
-                <PrimaryButton type="button" @click="openCreateModal">
+                <PrimaryButton type="button" @click="openCreateModal" v-if="userRole === 'super_admin'">
                     + Tambah Admin
                 </PrimaryButton>
             </div>
@@ -214,8 +216,8 @@ const formatRole = (role) => {
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-medium">
-                                <button @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
-                                <button @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
+                                <button v-if="userRole === 'super_admin'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
+                                <button v-if="userRole === 'super_admin'" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
                             </td>
                         </tr>
                         <tr v-if="admins.data.length === 0">
