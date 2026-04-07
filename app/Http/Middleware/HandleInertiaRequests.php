@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'global_settings' => [
                 'app_name' => $appName,
                 'app_logo' => $appLogo,
+                'support_whatsapp' => $settings['support_whatsapp'] ?? null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
