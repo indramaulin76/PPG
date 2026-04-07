@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -17,6 +17,7 @@ const props = defineProps({
     dropdowns: Object,
 });
 
+const userRole = computed(() => $page.props.auth?.user?.role);
 const search = ref(props.filters?.search || '');
 const filterValues = ref({
     desa_id: props.filters?.desa_id || '',
@@ -144,7 +145,7 @@ const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
                         </a>
                         
                         <Button 
-                            v-if="$page.props.auth.user.role === 'super_admin'" 
+                            v-if="userRole === 'super_admin'" 
                             variant="danger" 
                             size="sm" 
                             class="!rounded-xl shadow-lg shadow-red-100 shrink-0"
