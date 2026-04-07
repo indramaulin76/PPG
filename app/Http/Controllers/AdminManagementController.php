@@ -21,7 +21,11 @@ class AdminManagementController extends Controller
         // Build query based on current user's role
         $query = User::query();
         
-        if ($user->isSuperAdmin()) {
+        if ($user->isDeveloper()) {
+            // Developer can see all admins including Super Admins (except themselves)
+            $query->whereIn('role', [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK])
+                  ->where('id', '!=', $user->id);
+        } elseif ($user->isSuperAdmin()) {
             // Super admin can see all admin desa & kelompok
             $query->whereIn('role', [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK]);
         } elseif ($user->isAdminDesa()) {
@@ -36,7 +40,7 @@ class AdminManagementController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                  ->orWhere('username', 'like', '%' . $request->search . '%');
             });
         }
         
@@ -56,20 +60,24 @@ class AdminManagementController extends Controller
             ->through(fn ($admin) => [
                 'id' => $admin->id,
                 'name' => $admin->name,
-                'email' => $admin->email,
+                'username' => $admin->username,
                 'role' => $admin->role,
                 'desa' => $admin->desa?->nama_desa,
-                'desa_id' => $admin->desa_id, // Added ID
+                'desa_id' => $admin->desa_id,
                 'kelompok' => $admin->kelompok?->nama_kelompok,
-                'kelompok_id' => $admin->kelompok_id, // Added ID
+                'kelompok_id' => $admin->kelompok_id,
                 'is_active' => $admin->is_active,
                 'created_at' => $admin->created_at->format('d M Y'),
             ]);
         
         // Prepare dropdown options
-        $allowedRoles = $user->isSuperAdmin() 
-            ? [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK]
-            : [User::ROLE_ADMIN_KELOMPOK];
+        if ($user->isDeveloper()) {
+            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+        } elseif ($user->isSuperAdmin()) {
+            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+        } else {
+            $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
+        }
         
         $desas = $user->isSuperAdmin() 
             ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
@@ -95,17 +103,30 @@ class AdminManagementController extends Controller
     {
         $user = auth()->user();
         
+        $allowedRoles = [];
+        if ($user->isDeveloper()) {
+            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+        } elseif ($user->isSuperAdmin()) {
+            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+        } else {
+            $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in($user->isSuperAdmin() 
-                ? [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK]
-                : [User::ROLE_ADMIN_KELOMPOK])],
-            'desa_id' => 'required_if:role,' . User::ROLE_ADMIN_DESA . '|nullable|exists:desas,id',
+            'role' => ['required', Rule::in($allowedRoles)],
+            'desa_id' => 'required_if:role,' . User::ROLE_ADMIN_DESA . '|required_if:role,' . User::ROLE_ADMIN_KELOMPOK . '|nullable|exists:desas,id',
             'kelompok_id' => 'required_if:role,' . User::ROLE_ADMIN_KELOMPOK . '|nullable|exists:kelompoks,id',
             'is_active' => 'sometimes|boolean',
         ]);
+
+        // Fix desa_id validation for Super Admin - it should be null
+        if ($validated['role'] === User::ROLE_SUPER_ADMIN) {
+            $validated['desa_id'] = null;
+            $validated['kelompok_id'] = null;
+        }
         
         // Security check: Admin desa can't create admin desa
         if ($user->isAdminDesa() && $validated['role'] === User::ROLE_ADMIN_DESA) {

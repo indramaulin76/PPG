@@ -64,8 +64,9 @@ class User extends Authenticatable
     }
 
     // ============================================
-    // Role Constants (3-Tier Admin System)
+    // Role Constants (3-Tier Admin System + Developer)
     // ============================================
+    const ROLE_DEVELOPER = 'developer';
     const ROLE_SUPER_ADMIN = 'super_admin';
     const ROLE_ADMIN_DESA = 'admin_desa';
     const ROLE_ADMIN_KELOMPOK = 'admin_kelompok';
@@ -86,9 +87,14 @@ class User extends Authenticatable
     // ============================================
     // Role Helper Methods
     // ============================================
+    public function isDeveloper(): bool
+    {
+        return $this->role === self::ROLE_DEVELOPER;
+    }
+
     public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_SUPER_ADMIN;
+        return $this->role === self::ROLE_SUPER_ADMIN || $this->isDeveloper();
     }
 
     public function isAdminDesa(): bool
@@ -106,8 +112,14 @@ class User extends Authenticatable
      */
     public function canManageUser(User $user): bool
     {
-        // Super admin can manage everyone
-        if ($this->isSuperAdmin()) return true;
+        // Developer can manage everyone including Super Admin
+        if ($this->isDeveloper()) return true;
+
+        // Super admin can manage everyone except Developer and other Super Admins (by convention, but let's allow managing other super admins if needed, though usually they manage lower tiers)
+        if ($this->isSuperAdmin()) {
+            if ($user->isDeveloper()) return false;
+            return true;
+        }
         
         // Admin Desa can manage Admin Kelompok in their desa
         if ($this->isAdminDesa() && $user->isAdminKelompok()) {
@@ -122,7 +134,9 @@ class User extends Authenticatable
      */
     public function getScopeLabel(): string
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isDeveloper()) {
+            return 'Developer / System Owner';
+        } elseif ($this->isSuperAdmin()) {
             return 'Seluruh Sistem';
         } elseif ($this->isAdminDesa()) {
             return 'Desa ' . ($this->desa?->nama_desa ?? 'N/A');
@@ -147,6 +161,7 @@ class User extends Authenticatable
     public function canAccessDashboard(): bool
     {
         return $this->is_active && in_array($this->role, [
+            self::ROLE_DEVELOPER,
             self::ROLE_SUPER_ADMIN,
             self::ROLE_ADMIN_DESA,
             self::ROLE_ADMIN_KELOMPOK

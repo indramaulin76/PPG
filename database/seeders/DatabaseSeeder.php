@@ -16,111 +16,67 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 1. Buat User Super Admin
         $this->call([
             UserSeeder::class,
         ]);
-        
-        // Buat data dummy untuk testing
-        
-        // 1. Buat Desa
-        $desas = [
-            ['nama_desa' => 'JATI', 'kode_desa' => 'JT01'],
-            ['nama_desa' => 'PONDOK BM', 'kode_desa' => 'PB01'],
-            ['nama_desa' => 'KALI DERES', 'kode_desa' => 'KD01'],
-        ];
-        
-        foreach ($desas as $desaData) {
-            $desa = Desa::create($desaData);
-            
-            // Buat Akun Admin Desa
-            User::create([
-                'name' => 'Admin Desa ' . $desa->nama_desa,
-                'username' => 'admindesa_' . strtolower(str_replace(' ', '', $desa->nama_desa)),
-                'password' => bcrypt('password'),
-                'role' => User::ROLE_ADMIN_DESA,
-                'desa_id' => $desa->id,
-                'is_active' => true,
-            ]);
-            
-            // 2. Buat Kelompok untuk setiap desa
-            $kelompoks = [
-                $desa->kelompoks()->create(['nama_kelompok' => $desaData['nama_desa'] . ' TIMUR']),
-                $desa->kelompoks()->create(['nama_kelompok' => $desaData['nama_desa'] . ' BARAT']),
-            ];
-            
-            // 3. Buat Keluarga dan Jamaah untuk testing
-            foreach ($kelompoks as $kelompok) {
-                // Buat Akun Admin Kelompok
-                User::create([
-                    'name' => 'Admin Kelompok ' . $kelompok->nama_kelompok,
-                    'username' => 'adminklp_' . strtolower(str_replace(' ', '', $kelompok->nama_kelompok)),
-                    'password' => bcrypt('password'),
-                    'role' => User::ROLE_ADMIN_KELOMPOK,
-                    'desa_id' => $desa->id,
-                    'kelompok_id' => $kelompok->id,
-                    'is_active' => true,
-                ]);
 
-                for ($i = 1; $i <= 3; $i++) {
-                    $keluarga = Keluarga::create([
-                        'no_kk' => fake()->numerify('33########'),
-                        'alamat_rumah' => fake()->address(),
-                    ]);
-                    
-                    // Buat Kepala Keluarga
-                    $kepala = Jamaah::create([
+        // 2. Buat User Developer (Indra)
+        User::updateOrCreate(
+            ['username' => 'indra'],
+            [
+                'name' => 'Indra Developer',
+                'password' => bcrypt('indra123'),
+                'role' => User::ROLE_DEVELOPER,
+                'is_active' => true
+            ]
+        );
+        $this->command->info('✅ User Developer Indra berhasil disiapkan.');
+
+        // 3. Masukkan Data Master Desa & Kelompok
+        $this->call([
+            DesaKelompokSeeder::class,
+        ]);
+        $this->command->info('✅ Master Data Desa & Kelompok berhasil dimasukkan.');
+
+        // 4. (Opsional) Buat Akun Admin untuk setiap Desa & Kelompok
+        $desas = Desa::all();
+        foreach ($desas as $desa) {
+            // Admin Desa
+            User::updateOrCreate(
+                ['username' => 'admindesa_' . strtolower(str_replace(' ', '', $desa->nama_desa))],
+                [
+                    'name' => 'Admin Desa ' . $desa->nama_desa,
+                    'password' => bcrypt('password'),
+                    'role' => User::ROLE_ADMIN_DESA,
+                    'desa_id' => $desa->id,
+                    'is_active' => true,
+                ]
+            );
+
+            // Admin Kelompok
+            foreach ($desa->kelompoks as $kelompok) {
+                User::updateOrCreate(
+                    ['username' => 'adminklp_' . strtolower(str_replace(' ', '', $kelompok->nama_kelompok))],
+                    [
+                        'name' => 'Admin Kelompok ' . $kelompok->nama_kelompok,
+                        'password' => bcrypt('password'),
+                        'role' => User::ROLE_ADMIN_KELOMPOK,
+                        'desa_id' => $desa->id,
                         'kelompok_id' => $kelompok->id,
-                        'keluarga_id' => $keluarga->id,
-                        'nama_lengkap' => fake()->name('male'),
-                        'tgl_lahir' => fake()->dateTimeBetween('-65 years', '-25 years')->format('Y-m-d'),
-                        'jenis_kelamin' => 'L',
-                        'status_pernikahan' => 'MENIKAH',
-                        'pendidikan_aktivitas' => fake()->randomElement(['SD', 'SMP', 'SMA', 'S1', 'Bekerja']),
-                        'no_telepon' => fake()->phoneNumber(),
-                        'role_dlm_keluarga' => 'KEPALA',
-                    ]);
-                    
-                    // Update kepala keluarga
-                    $keluarga->update(['kepala_keluarga_id' => $kepala->id]);
-                    
-                    // Buat Istri
-                    Jamaah::create([
-                        'kelompok_id' => $kelompok->id,
-                        'keluarga_id' => $keluarga->id,
-                        'nama_lengkap' => fake()->name('female'),
-                        'tgl_lahir' => fake()->dateTimeBetween('-60 years', '-20 years')->format('Y-m-d'),
-                        'jenis_kelamin' => 'P',
-                        'status_pernikahan' => 'MENIKAH',
-                        'pendidikan_aktivitas' => fake()->randomElement(['SD', 'SMP', 'SMA', 'S1', 'Ibu Rumah Tangga']),
-                        'no_telepon' => fake()->phoneNumber(),
-                        'role_dlm_keluarga' => 'ISTRI',
-                    ]);
-                    
-                    // Buat Anak-anak (2-4 anak)
-                    $jumlahAnak = rand(2, 4);
-                    for ($j = 0; $j < $jumlahAnak; $j++) {
-                        Jamaah::create([
-                            'kelompok_id' => $kelompok->id,
-                            'keluarga_id' => $keluarga->id,
-                            'nama_lengkap' => fake()->name(fake()->randomElement(['male', 'female'])),
-                            'tgl_lahir' => fake()->dateTimeBetween('-20 years', '-1 years')->format('Y-m-d'),
-                            'jenis_kelamin' => fake()->randomElement(['L', 'P']),
-                            'status_pernikahan' => 'BELUM',
-                            'pendidikan_aktivitas' => fake()->randomElement(['BALITA', 'TK', 'SD', 'SMP', 'SMA', 'KULIAH']),
-                            'no_telepon' => null,
-                            'role_dlm_keluarga' => 'ANAK',
-                        ]);
-                    }
-                }
+                        'is_active' => true,
+                    ]
+                );
             }
         }
-        
-        $this->command->info('✅ Dummy data berhasil dibuat!');
-        $this->command->info('Total User: ' . User::count());
-        $this->command->info('Total Desa: ' . Desa::count());
+        $this->command->info('✅ Akun Admin Desa & Kelompok berhasil disiapkan.');
+
+        // Ringkasan
+        $this->command->info('--- RINGKASAN DATABASE ---');
+        $this->command->info('Total User    : ' . User::count());
+        $this->command->info('Total Desa    : ' . Desa::count());
         $this->command->info('Total Kelompok: ' . Kelompok::count());
-        $this->command->info('Total Keluarga: ' . Keluarga::count());
-        $this->command->info('Total Jamaah: ' . Jamaah::count());
+        $this->command->info('Total Jamaah  : ' . Jamaah::count());
+        $this->command->info('--------------------------');
     }
 }
-
