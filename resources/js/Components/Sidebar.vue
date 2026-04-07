@@ -18,7 +18,7 @@ const isActive = (routeName) => {
     return route().current(routeName) || route().current(routeName + '.*');
 };
 
-const isSuperAdmin = computed(() => user.value?.role === 'super_admin');
+const isSuperAdmin = computed(() => user.value?.role === 'super_admin' || user.value?.role === 'developer');
 const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
 </script>
 

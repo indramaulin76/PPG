@@ -25,6 +25,11 @@ class CheckAdminLevel
 
         $user = auth()->user();
 
+        // Developer always has access
+        if ($user->role === \App\Models\User::ROLE_DEVELOPER) {
+            return $next($request);
+        }
+
         // Check if user is active
         if (!$user->is_active) {
             auth()->logout();
