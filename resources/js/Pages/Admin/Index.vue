@@ -18,6 +18,7 @@ const props = defineProps({
 });
 
 const search = ref(props.filters.search || '');
+const filterDesa = ref(props.filters.desa_id || '');
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const editingAdmin = ref(null);
@@ -34,18 +35,21 @@ const form = useForm({
     is_active: true,
 });
 
-// Watch search to debounce
+// Watch filters to debounce and update
 let timeout;
-watch(search, (value) => {
+watch([search, filterDesa], ([sValue, dValue]) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-        router.get(route('admin.index'), { search: value }, { preserveState: true, replace: true });
+        router.get(route('admin.index'), { 
+            search: sValue,
+            desa_id: dValue 
+        }, { preserveState: true, replace: true });
     }, 300);
 });
 
 // Computeds for dynamic form fields
 const showDesaDropdown = computed(() => {
-    return form.role === 'admin_desa' || form.role === 'admin_kelompok'; // Admin Desa needs desa connection, Admin Kelompok needs kel + desa
+    return form.role === 'admin_desa' || form.role === 'admin_kelompok';
 });
 
 // Filter kelompoks based on selected desa (if applicable)
@@ -53,11 +57,6 @@ const filteredKelompoks = computed(() => {
     if (!form.desa_id) return [];
     return props.kelompoks.filter(k => k.desa_id == form.desa_id);
 });
-
-// Auto-select Desa if user is Admin Desa (creating Kelompok Admin)
-// But wait, the controller already handles this security. 
-// In frontend, if I am Admin Desa, props.desas only contains my desa.
-// So I should just select it automatically.
 
 const openCreateModal = () => {
     form.reset();
@@ -74,6 +73,13 @@ const openCreateModal = () => {
     showCreateModal.value = true;
 };
 
+const closeModal = () => {
+    showCreateModal.value = false;
+    showEditModal.value = false;
+    form.reset();
+    form.clearErrors();
+};
+
 const openEditModal = (admin) => {
     editingAdmin.value = admin;
     form.reset();
@@ -82,25 +88,7 @@ const openEditModal = (admin) => {
     form.role = admin.role;
     form.desa_id = admin.desa_id || '';
     form.kelompok_id = admin.kelompok_id || '';
-    form.is_active = !!admin.is_active; // integer to boolean
-    
-    // Reverse find IDs from names? No, the controller should pass IDs... 
-    // Wait, controller passes 'desa' name and 'kelompok' name in mapped resource.
-    // I need IDs for the form.
-    // The controller currently maps: 'desa' => name, 'kelompok' => name.
-    // I need to update controller to pass IDs or just accept that I can't edit relationships easily without IDs.
-    // Actually, create form needs IDs. Edit form also needs IDs.
-    // Let's check AdminManagementController again.
-    // Index method scopes: 'desa' => $admin->desa?->nama_desa.
-    // I need to add 'desa_id' and 'kelompok_id' to the resource.
-    
-    // Since I can't easily change controller right now without tool call, 
-    // I will assume I can edit Name/Email/Password/Active status.
-    // Changing scope (Desa/Kelompok) might be rare.
-    // BUT, let's try to infer or just accept I will make a quick fix to controller next.
-    // For now, let's just create the UI skeleton.
-    
-    // Updated: I WILL Fix controller to pass IDs.
+    form.is_active = !!admin.is_active;
     
     showEditModal.value = true;
 };
@@ -108,8 +96,7 @@ const openEditModal = (admin) => {
 const submitCreate = () => {
     form.post(route('admin.store'), {
         onSuccess: () => {
-            showCreateModal.value = false;
-            form.reset();
+            closeModal();
         },
     });
 };
@@ -117,8 +104,7 @@ const submitCreate = () => {
 const submitEdit = () => {
     form.put(route('admin.update', editingAdmin.value.id), {
         onSuccess: () => {
-            showEditModal.value = false;
-            form.reset();
+            closeModal();
         },
     });
 };
@@ -134,6 +120,7 @@ const getRoleBadgeColor = (role) => {
         case 'super_admin': return 'bg-purple-100 text-purple-800';
         case 'admin_desa': return 'bg-orange-100 text-orange-800';
         case 'admin_kelompok': return 'bg-blue-100 text-blue-800';
+        case 'developer': return 'bg-red-100 text-red-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 };
@@ -151,7 +138,7 @@ const formatRole = (role) => {
                     Kelola Admin
                 </h2>
                 <PrimaryButton @click="openCreateModal">
-                    + Tambah
+                    + Tambah Admin
                 </PrimaryButton>
             </div>
         </template>
@@ -159,17 +146,30 @@ const formatRole = (role) => {
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <!-- Toolbar -->
             <div class="p-4 border-b border-gray-100">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                        </svg>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <TextInput
+                            v-model="search"
+                            placeholder="Cari nama atau username..."
+                            class="pl-10 w-full"
+                        />
                     </div>
-                    <TextInput
-                        v-model="search"
-                        placeholder="Cari..."
-                        class="pl-10 w-full"
-                    />
+                    <div class="w-full md:w-64" v-if="desas.length > 1">
+                        <select 
+                            v-model="filterDesa"
+                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                        >
+                            <option value="">Semua Desa</option>
+                            <option v-for="desa in desas" :key="desa.id" :value="desa.id">
+                                {{ desa.nama_desa }}
+                            </option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -189,51 +189,46 @@ const formatRole = (role) => {
                         <tr v-for="admin in admins.data" :key="admin.id" class="hover:bg-gray-50">
                             <td class="px-4 py-3">
                                 <div class="flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm mr-3 flex-shrink-0">
+                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm mr-3 flex-shrink-0">
                                         {{ admin.name.charAt(0) }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-sm font-medium text-gray-900 truncate max-w-[120px]">{{ admin.name }}</div>
-                                        <div class="text-xs text-gray-500 truncate max-w-[120px] sm:hidden">{{ admin.username }}</div>
+                                        <div class="text-sm font-medium text-gray-900 truncate max-w-[150px]">{{ admin.name }}</div>
+                                        <div class="text-xs text-gray-500 truncate max-w-[150px]">@{{ admin.username }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-4 py-3 hidden sm:table-cell">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeColor(admin.role)">
+                                <span class="px-2 inline-flex text-[10px] leading-5 font-semibold rounded-full uppercase" :class="getRoleBadgeColor(admin.role)">
                                     {{ formatRole(admin.role) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
-                                <div v-if="admin.desa">{{ admin.desa }}</div>
-                                <div v-else-if="admin.kelompok">{{ admin.kelompok }}</div>
-                                <div v-else class="text-gray-400 italic">Global</div>
+                                <div v-if="admin.desa" class="font-medium text-gray-700">{{ admin.desa }}</div>
+                                <div v-if="admin.kelompok" class="text-xs text-gray-400">{{ admin.kelompok }}</div>
+                                <div v-if="!admin.desa && !admin.kelompok" class="text-gray-400 italic">Seluruh Sistem</div>
                             </td>
                             <td class="px-4 py-3 hidden sm:table-cell">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="admin.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                                    {{ admin.is_active ? 'Aktif' : 'Non' }}
+                                    {{ admin.is_active ? 'Aktif' : 'Nonaktif' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-medium">
-                                <button @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 text-xs">Edit</button>
-                                <button @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 text-xs ml-3">Hapus</button>
+                                <button @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
+                                <button @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
                             </td>
                         </tr>
-                            <tr v-if="!admins.data || admins.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center">
-                                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <p class="mt-2 text-sm font-medium text-gray-500">Belum ada admin yang terdaftar</p>
-                                    <p class="mt-1 text-xs text-gray-400">Klik tombol "+ Tambah" untuk membuat admin baru</p>
-                                </td>
-                            </tr>
+                        <tr v-if="admins.data.length === 0">
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
+                                Tidak ada admin ditemukan.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
             
             <!-- Pagination -->
             <div class="px-6 py-4 border-t border-gray-200" v-if="admins.links.length > 3">
-                <!-- Simple pagination links implementation to be added if needed -->
                  <div class="flex justify-center">
                      <template v-for="(link, k) in admins.links" :key="k">
                         <Link
@@ -249,9 +244,9 @@ const formatRole = (role) => {
         </div>
 
         <!-- Create/Edit Modal -->
-        <Modal :show="showCreateModal || showEditModal" @close="showCreateModal = false; showEditModal = false">
+        <Modal :show="showCreateModal || showEditModal" @close="closeModal">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">
+                <h2 class="text-lg font-medium text-gray-900 mb-4 border-b pb-2">
                     {{ showCreateModal ? 'Tambah Admin Baru' : 'Edit Admin' }}
                 </h2>
 
@@ -283,9 +278,8 @@ const formatRole = (role) => {
                         </div>
 
                         <!-- Scope Selection -->
-                        <!-- Desa Dropdown: Visible if role is admin_desa or admin_kelompok -->
                         <div v-if="form.role === 'admin_desa' || form.role === 'admin_kelompok'">
-                            <InputLabel for="desa_id" value="Desa" />
+                            <InputLabel for="desa_id" value="Wilayah Desa" />
                              <select id="desa_id" v-model="form.desa_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" :disabled="desas.length === 1">
                                 <option value="">Pilih Desa</option>
                                 <option v-for="desa in desas" :key="desa.id" :value="desa.id">
@@ -295,9 +289,8 @@ const formatRole = (role) => {
                             <InputError :message="form.errors.desa_id" class="mt-2" />
                         </div>
 
-                        <!-- Kelompok Dropdown: Visible if role is admin_kelompok -->
                         <div v-if="form.role === 'admin_kelompok'">
-                            <InputLabel for="kelompok_id" value="Kelompok" />
+                            <InputLabel for="kelompok_id" value="Wilayah Kelompok" />
                              <select id="kelompok_id" v-model="form.kelompok_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                 <option value="">Pilih Kelompok</option>
                                 <option v-for="kelompok in filteredKelompoks" :key="kelompok.id" :value="kelompok.id">
@@ -310,7 +303,7 @@ const formatRole = (role) => {
                         <!-- Password -->
                         <div class="pt-2">
                             <hr class="my-2" />
-                            <p class="text-xs text-gray-500 mb-2" v-if="showEditModal">Kosongkan jika tidak ingin mengubah password</p>
+                            <p class="text-[10px] text-gray-500 mb-2 uppercase tracking-wider" v-if="showEditModal">Kosongkan jika tidak ingin mengubah password</p>
                         </div>
                         
                         <div>
@@ -324,16 +317,16 @@ const formatRole = (role) => {
                             <TextInput id="password_confirmation" v-model="form.password_confirmation" type="password" class="mt-1 block w-full" :required="showCreateModal" />
                         </div>
 
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
                              <input type="checkbox" id="is_active" v-model="form.is_active" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                             <label for="is_active" class="text-sm text-gray-700">Akun Aktif</label>
+                             <label for="is_active" class="text-sm font-bold text-gray-700">Akun ini diaktifkan</label>
                         </div>
                     </div>
 
                     <div class="mt-6 flex justify-end gap-3">
-                        <SecondaryButton @click="showCreateModal = false; showEditModal = false">Batal</SecondaryButton>
+                        <SecondaryButton type="button" @click="closeModal">Batal</SecondaryButton>
                         <PrimaryButton :disabled="form.processing">
-                            {{ showCreateModal ? 'Simpan Admin' : 'Simpan Perubahan' }}
+                            {{ showCreateModal ? 'Simpan Akun' : 'Update Akun' }}
                         </PrimaryButton>
                     </div>
                 </form>

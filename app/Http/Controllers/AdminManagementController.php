@@ -26,8 +26,9 @@ class AdminManagementController extends Controller
             $query->whereIn('role', [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK])
                   ->where('id', '!=', $user->id);
         } elseif ($user->isSuperAdmin()) {
-            // Super admin can see all admin desa & kelompok
-            $query->whereIn('role', [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK]);
+            // Super admin can see all admin levels except Developer
+            $query->whereIn('role', [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK])
+                  ->where('id', '!=', $user->id);
         } elseif ($user->isAdminDesa()) {
             // Admin desa can only see admin kelompok in their desa
             $query->where('role', User::ROLE_ADMIN_KELOMPOK)
@@ -74,7 +75,7 @@ class AdminManagementController extends Controller
         if ($user->isDeveloper()) {
             $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
         } elseif ($user->isSuperAdmin()) {
-            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
         } else {
             $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
         }
@@ -107,7 +108,7 @@ class AdminManagementController extends Controller
         if ($user->isDeveloper()) {
             $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
         } elseif ($user->isSuperAdmin()) {
-            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
+            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
         } else {
             $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
         }
