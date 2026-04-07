@@ -76,4 +76,5 @@ Route::middleware(['auth'])->group(function () {
     // Export Jamaah - all admin levels (scoped data)
     Route::get('/export/jamaah', [ImportController::class, 'export'])->name('export.jamaah');
     Route::get('/export/jamaah/excel', [ImportController::class, 'exportExcel'])->name('export.jamaah.excel');
+    Route::get('/export/statistik', [ImportController::class, 'exportStatistik'])->name('export.statistik');
 }); // End of auth middleware group

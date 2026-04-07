@@ -27,7 +27,7 @@ const exportOptions = [
         description: 'Download statistik lengkap dalam format PDF',
         icon: 'document',
         action: () => window.location.href = '/export/statistik',
-        roles: ['super_admin'],
+        roles: ['super_admin', 'admin_desa', 'admin_kelompok'],
     },
 ];
 
