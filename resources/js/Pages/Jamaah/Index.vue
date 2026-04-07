@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
@@ -17,7 +17,8 @@ const props = defineProps({
     dropdowns: Object,
 });
 
-const userRole = computed(() => $page.props.auth?.user?.role);
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role);
 const search = ref(props.filters?.search || '');
 const filterValues = ref({
     desa_id: props.filters?.desa_id || '',

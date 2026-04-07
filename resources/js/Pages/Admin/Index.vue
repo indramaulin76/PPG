@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import Modal from '@/Components/UI/Modal.vue';
 import InputError from '@/Components/InputError.vue';
@@ -17,7 +17,8 @@ const props = defineProps({
     kelompoks: Array,
 });
 
-const userRole = computed(() => $page.props.auth?.user?.role);
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role);
 
 const search = ref(props.filters.search || '');
 const filterDesa = ref(props.filters.desa_id || '');

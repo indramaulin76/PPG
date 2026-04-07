@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useForm, router } from '@inertiajs/vue3';
+import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Input from '@/Components/UI/Input.vue';
@@ -11,7 +11,8 @@ const props = defineProps({
     desas: Object,
 });
 
-const userRole = computed(() => $page.props.auth?.user?.role);
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role);
 const showModal = ref(false);
 const editMode = ref(false);
 const editId = ref(null);

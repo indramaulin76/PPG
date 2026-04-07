@@ -13,6 +13,7 @@ defineEmits(['close']);
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user || {});
+const globalSettings = computed(() => page.props.global_settings || {});
 
 const isActive = (routeName) => {
     return route().current(routeName) || route().current(routeName + '.*');
@@ -46,7 +47,7 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
             <div class="flex items-center justify-between min-h-[5rem] py-3 px-6 border-b border-gray-100 flex-shrink-0">
                 <Link :href="route('dashboard')" class="flex items-center gap-3" @click="$emit('close')">
                     <div class="w-12 h-12 flex items-center justify-center shrink-0">
-                        <img v-if="$page.props.global_settings.app_logo" :src="$page.props.global_settings.app_logo" class="w-full h-full object-contain rounded-xl shadow-sm" alt="Logo" />
+                        <img v-if="globalSettings.app_logo" :src="globalSettings.app_logo" class="w-full h-full object-contain rounded-xl shadow-sm" alt="Logo" />
                         <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -54,8 +55,8 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="font-bold text-gray-900 text-sm sm:text-base leading-tight block break-words" :title="$page.props.global_settings.app_name">
-                            {{ $page.props.global_settings.app_name }}
+                        <span class="font-bold text-gray-900 text-sm sm:text-base leading-tight block break-words" :title="globalSettings.app_name">
+                            {{ globalSettings.app_name }}
                         </span>
                     </div>
                 </Link>
@@ -124,7 +125,7 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
                             Kelola User
                         </Link>
 
-                        <a v-if="$page.props.global_settings.support_whatsapp" :href="'https://wa.me/' + $page.props.global_settings.support_whatsapp + '?text=Halo, saya butuh bantuan terkait aplikasi PPG.'" target="_blank" class="flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 group">
+                        <a v-if="globalSettings.support_whatsapp" :href="'https://wa.me/' + globalSettings.support_whatsapp + '?text=Halo, saya butuh bantuan terkait aplikasi PPG.'" target="_blank" class="flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 group">
                             <svg class="w-5 h-5 mr-3 transition-colors text-gray-400 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>

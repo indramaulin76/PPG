@@ -1,10 +1,12 @@
 <script setup>
 import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Card from '@/Components/UI/Card.vue';
 
-const userRole = computed(() => $page.props.auth?.user?.role);
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role);
 
 const exportOptions = [
     {

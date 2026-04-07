@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Select from '@/Components/UI/Select.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
@@ -12,7 +12,8 @@ const props = defineProps({
     isAdminDesa: Boolean,
 });
 
-const userRole = computed(() => $page.props.auth?.user?.role);
+const page = usePage();
+const userRole = computed(() => page.props.auth?.user?.role);
 const filterDesa = ref(props.filters?.desa_id || '');
 
 watch(filterDesa, (val) => {
