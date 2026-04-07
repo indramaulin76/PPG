@@ -39,7 +39,7 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
 
         <!-- Sidebar Container -->
         <aside 
-            class="fixed inset-y-0 left-0 w-56 bg-white border-r border-gray-200 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:shadow-none lg:h-full z-50 flex flex-col"
+            class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:shadow-none lg:h-full z-50 flex flex-col"
             :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <!-- Logo Area -->
@@ -53,7 +53,7 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
                             </svg>
                         </div>
                     </div>
-                    <span class="font-bold text-gray-900 tracking-tight leading-tight line-clamp-2 text-lg" :title="$page.props.global_settings.app_name">
+                    <span class="font-bold text-gray-900 text-base leading-tight whitespace-normal break-words" :title="$page.props.global_settings.app_name">
                         {{ $page.props.global_settings.app_name }}
                     </span>
                 </Link>
