@@ -143,7 +143,14 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
                              <svg class="w-5 h-5 mr-3 transition-colors" :class="isActive('import') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>
-                             Import Data
+                              Import Data
+                        </Link>
+
+                        <Link :href="route('profile.index')" :class="isActive('profile') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'" class="flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 group" @click="$emit('close')">
+                             <svg class="w-5 h-5 mr-3 transition-colors" :class="isActive('profile') ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                             Profil Saya
                         </Link>
                     </div>
                 </div>

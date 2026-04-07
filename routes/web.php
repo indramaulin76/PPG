@@ -33,9 +33,12 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/desa/{desa}', [WilayahController::class, 'desaDestroy'])->name('desa.destroy');
         });
 
-        // Kelompok - Super Admin and Admin Desa can manage
+        // Kelompok - Super Admin only for CRUD, all can view
         Route::middleware(['auth'])->group(function () {
             Route::get('/kelompok', [WilayahController::class, 'kelompokIndex'])->name('kelompok.index');
+        });
+
+        Route::middleware(['role:super_admin'])->group(function () {
             Route::post('/kelompok', [WilayahController::class, 'kelompokStore'])->name('kelompok.store');
             Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
             Route::delete('/kelompok/{kelompok}', [WilayahController::class, 'kelompokDestroy'])->name('kelompok.destroy');
@@ -52,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin', [AdminManagementController::class, 'store'])->name('admin.store');
         Route::delete('/admin/{admin}', [AdminManagementController::class, 'destroy'])->name('admin.destroy');
     });
+
+    // Profile - all authenticated users can edit their own profile
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Web Settings - Developer only
     Route::middleware(['role:developer'])->group(function () {

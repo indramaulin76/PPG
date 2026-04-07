@@ -216,7 +216,7 @@ const formatRole = (role) => {
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-medium">
-                                <button v-if="userRole === 'super_admin'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
+                                <button v-if="userRole === 'super_admin' || userRole === 'admin_desa'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
                                 <button v-if="userRole === 'super_admin'" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
                             </td>
                         </tr>

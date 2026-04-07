@@ -298,6 +298,15 @@ class JamaahController extends Controller
      */
     public function update(Request $request, Jamaah $jamaah)
     {
+        $user = auth()->user();
+
+        // Security: Check access to update this jamaah
+        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+            abort(403, 'Anda tidak bisa mengedit jamaah di desa lain');
+        } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
+            abort(403, 'Anda tidak bisa mengedit jamaah di kelompok lain');
+        }
+
         $validated = $request->validate([
             'kelompok_id' => 'required|exists:kelompoks,id',
             'keluarga_id' => 'nullable|exists:keluargas,id',

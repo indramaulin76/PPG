@@ -88,8 +88,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isAdminDesa() && $request->desa_id != $user->desa_id) {
-            abort(403, 'Anda hanya bisa menambahkan kelompok di desa Anda sendiri.');
+        if (! $user->isSuperAdmin()) {
+            abort(403, 'Hanya Super Admin yang dapat menambahkan kelompok.');
         }
 
         $validated = $request->validate([
@@ -106,8 +106,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isAdminDesa() && $kelompok->desa_id !== $user->desa_id) {
-            abort(403, 'Anda tidak memiliki akses ke kelompok ini');
+        if (! $user->isSuperAdmin()) {
+            abort(403, 'Hanya Super Admin yang dapat mengedit kelompok.');
         }
 
         $validated = $request->validate([
@@ -123,12 +123,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isAdminDesa() && $kelompok->desa_id !== $user->desa_id) {
-            abort(403, 'Anda tidak memiliki akses ke kelompok ini.');
-        }
-
-        if (! $user->isSuperAdmin() && ! $user->isAdminDesa()) {
-            abort(403, 'Anda tidak memiliki izin untuk menghapus kelompok.');
+        if (! $user->isSuperAdmin()) {
+            abort(403, 'Hanya Super Admin yang dapat menghapus kelompok.');
         }
 
         if ($kelompok->jamaahs()->exists()) {

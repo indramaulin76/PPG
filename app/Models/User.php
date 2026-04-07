@@ -25,6 +25,7 @@ class User extends Authenticatable
         'is_active',
         'desa_id',
         'kelompok_id',
+        'no_telepon',
     ];
 
     /**
