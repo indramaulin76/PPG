@@ -71,7 +71,7 @@ const sidebarOpen = ref(false);
                                     <span class="hidden lg:inline ml-2 text-sm">Keluar</span>
                                 </Link>
 
-                                <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-white">
+                                <div class="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-white">
                                     {{ authUser?.name?.charAt(0).toUpperCase() || 'U' }}
                                 </div>
                              </div>

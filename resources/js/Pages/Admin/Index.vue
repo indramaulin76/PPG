@@ -188,13 +188,13 @@ const formatRole = (role) => {
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-for="admin in admins.data" :key="admin.id" class="hover:bg-gray-50">
                             <td class="px-4 py-3">
-                                <div class="flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm mr-3 flex-shrink-0">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
                                         {{ admin.name.charAt(0) }}
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-sm font-medium text-gray-900 truncate max-w-[150px]">{{ admin.name }}</div>
-                                        <div class="text-xs text-gray-500 truncate max-w-[150px]">@{{ admin.username }}</div>
+                                        <div class="text-sm font-medium text-gray-900" :title="admin.name">{{ admin.name }}</div>
+                                        <div class="text-xs text-gray-500">@{{ admin.username }}</div>
                                     </div>
                                 </div>
                             </td>

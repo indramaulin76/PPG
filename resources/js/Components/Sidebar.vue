@@ -43,17 +43,17 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
             :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <!-- Logo Area -->
-            <div class="flex items-center justify-between h-16 px-6 border-b border-gray-100 flex-shrink-0">
+            <div class="flex items-center justify-between h-20 px-6 border-b border-gray-100 flex-shrink-0">
                 <Link :href="route('dashboard')" class="flex items-center gap-3" @click="$emit('close')">
-                    <div class="w-9 h-9 flex items-center justify-center shrink-0">
+                    <div class="w-12 h-12 flex items-center justify-center shrink-0">
                         <img v-if="$page.props.global_settings.app_logo" :src="$page.props.global_settings.app_logo" class="w-full h-full object-contain rounded-xl shadow-sm" alt="Logo" />
                         <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
                     </div>
-                    <span class="font-bold text-gray-900 tracking-tight leading-tight line-clamp-2" :class="($page.props.global_settings.app_name && $page.props.global_settings.app_name.length > 10) ? 'text-sm' : 'text-xl'" :title="$page.props.global_settings.app_name">
+                    <span class="font-bold text-gray-900 tracking-tight leading-tight line-clamp-2 text-lg" :title="$page.props.global_settings.app_name">
                         {{ $page.props.global_settings.app_name }}
                     </span>
                 </Link>
@@ -143,11 +143,11 @@ const isAdminDesa = computed(() => user.value?.role === 'admin_desa');
             <!-- User Footer -->
             <div class="p-4 border-t border-gray-100 bg-white">
                 <div class="flex items-center gap-3 p-2 rounded-xl bg-white border border-gray-100 shadow-sm">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm uppercase shadow-sm">
+                    <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm uppercase shadow-sm">
                         {{ user.name?.charAt(0) || 'U' }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-gray-900 truncate leading-none mb-1">{{ user.name || 'User' }}</p>
+                        <p class="text-sm font-bold text-gray-900 truncate leading-none mb-1" :title="user.name">{{ user.name || 'User' }}</p>
                         <p class="text-[10px] font-medium text-gray-500 truncate uppercase tracking-tighter">{{ user.scope_label || user.email || '' }}</p>
                     </div>
                 </div>
