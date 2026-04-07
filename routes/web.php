@@ -33,14 +33,11 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/desa/{desa}', [WilayahController::class, 'desaDestroy'])->name('desa.destroy');
         });
 
-        // Kelompok - Super Admin can manage (full), Admin Desa can only view & edit
+        // Kelompok - Super Admin and Admin Desa can manage
         Route::middleware(['auth'])->group(function () {
             Route::get('/kelompok', [WilayahController::class, 'kelompokIndex'])->name('kelompok.index');
-            Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
-        });
-
-        Route::middleware(['role:super_admin'])->group(function () {
             Route::post('/kelompok', [WilayahController::class, 'kelompokStore'])->name('kelompok.store');
+            Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
             Route::delete('/kelompok/{kelompok}', [WilayahController::class, 'kelompokDestroy'])->name('kelompok.destroy');
         });
     });
