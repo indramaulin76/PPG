@@ -56,8 +56,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/admin/{admin}', [AdminManagementController::class, 'destroy'])->name('admin.destroy');
     });
 
-    // Web Settings - Super Admin only
-    Route::middleware(['role:super_admin'])->group(function () {
+    // Web Settings - Developer only
+    Route::middleware(['role:developer'])->group(function () {
         Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
     });

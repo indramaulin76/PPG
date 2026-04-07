@@ -14,15 +14,18 @@ class SettingController extends Controller
         $settings = Setting::pluck('value', 'key')->toArray();
 
         // Defaults if none
-        if (!isset($settings['app_name'])) {
+        if (! isset($settings['app_name'])) {
             $settings['app_name'] = 'SI - JEMAAH';
         }
-        if (!isset($settings['app_logo'])) {
+        if (! isset($settings['app_logo'])) {
             $settings['app_logo'] = null; // null means no custom logo
+        }
+        if (! isset($settings['support_whatsapp'])) {
+            $settings['support_whatsapp'] = null;
         }
 
         return Inertia::render('Settings/Index', [
-            'settings' => $settings
+            'settings' => $settings,
         ]);
     }
 
@@ -30,7 +33,8 @@ class SettingController extends Controller
     {
         $request->validate([
             'app_name' => 'required|string|max:50',
-            'app_logo' => 'nullable|image|max:2048', // 2MB max
+            'app_logo' => 'nullable|image|max:2048',
+            'support_whatsapp' => 'nullable|string|max:20|regex:/^[0-9+\-\s()]+$/',
         ]);
 
         Setting::updateOrCreate(
@@ -41,8 +45,7 @@ class SettingController extends Controller
         if ($request->hasFile('app_logo')) {
             $file = $request->file('app_logo');
             $path = $file->store('logos', 'public');
-            
-            // Delete old logo if exist
+
             $oldLogo = Setting::where('key', 'app_logo')->first();
             if ($oldLogo && $oldLogo->value) {
                 Storage::disk('public')->delete($oldLogo->value);
@@ -53,6 +56,11 @@ class SettingController extends Controller
                 ['value' => $path]
             );
         }
+
+        Setting::updateOrCreate(
+            ['key' => 'support_whatsapp'],
+            ['value' => $request->support_whatsapp]
+        );
 
         return back()->with('success', 'Pengaturan berhasil diperbarui!');
     }

@@ -13,6 +13,7 @@ const props = defineProps({
 const form = useForm({
     app_name: props.settings.app_name || 'SI - JEMAAH',
     app_logo: null,
+    support_whatsapp: props.settings.support_whatsapp || '',
 });
 
 const logoPreview = ref(
@@ -110,6 +111,23 @@ const submit = () => {
                                     {{ form.errors.app_logo }}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Support -->
+                    <div class="border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-4">📞 Pengaturan Support</h3>
+                        
+                        <div>
+                            <Input
+                                v-model="form.support_whatsapp"
+                                label="Nomor WhatsApp Support"
+                                placeholder="Contoh: 6281234567890"
+                                :error="form.errors.support_whatsapp"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">
+                                Nomor WhatsApp untuk tombol bantuan di menu Support. Gunakan format: 6281234567890 (dengan kode negara, tanpa + atau spasi).
+                            </p>
                         </div>
                     </div>
 
