@@ -156,7 +156,16 @@ class JamaahExcelExportService
 
     private function getData()
     {
-        $query = Jamaah::with(['kelompok.desa', 'keluarga'])
+        $user = auth()->user();
+        $query = Jamaah::with(['kelompok.desa', 'keluarga']);
+
+        if ($user->isAdminDesa()) {
+            $query->whereHas('kelompok', fn ($q) => $q->where('desa_id', $user->desa_id));
+        } elseif ($user->isAdminKelompok()) {
+            $query->where('kelompok_id', $user->kelompok_id);
+        }
+
+        $query
             ->when($this->filters['desa_id'] ?? null, function ($query, $desaId) {
                 return $query->whereHas('kelompok', function ($q) use ($desaId) {
                     $q->where('desa_id', $desaId);

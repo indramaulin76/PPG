@@ -12,6 +12,7 @@ const props = defineProps({
     kelompoks: Object,
     desas: Array,
     filters: Object,
+    isAdminDesa: Boolean,
 });
 
 const filterDesa = ref(props.filters?.desa_id || '');

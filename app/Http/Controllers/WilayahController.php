@@ -10,7 +10,7 @@ use Inertia\Inertia;
 class WilayahController extends Controller
 {
     // ========== DESA ==========
-    
+
     public function desaIndex()
     {
         $desas = Desa::withCount('kelompoks', 'jamaahs')
@@ -37,7 +37,7 @@ class WilayahController extends Controller
     public function desaUpdate(Request $request, Desa $desa)
     {
         $validated = $request->validate([
-            'nama_desa' => 'required|string|max:100|unique:desas,nama_desa,' . $desa->id,
+            'nama_desa' => 'required|string|max:100|unique:desas,nama_desa,'.$desa->id,
             'kode_desa' => 'nullable|string|max:20',
         ]);
 
@@ -61,18 +61,26 @@ class WilayahController extends Controller
 
     public function kelompokIndex(Request $request)
     {
+        $user = auth()->user();
         $query = Kelompok::with('desa')->withCount('jamaahs');
 
-        if ($request->filled('desa_id')) {
+        if ($user->isAdminDesa()) {
+            $query->where('desa_id', $user->desa_id);
+        } elseif ($request->filled('desa_id')) {
             $query->where('desa_id', $request->desa_id);
         }
 
         $kelompoks = $query->orderBy('nama_kelompok')->paginate(15)->withQueryString();
 
+        $desas = $user->isAdminDesa()
+            ? Desa::where('id', $user->desa_id)->select('id', 'nama_desa')->get()
+            : Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get();
+
         return Inertia::render('Wilayah/Kelompok/Index', [
             'kelompoks' => $kelompoks,
-            'desas' => Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get(),
+            'desas' => $desas,
             'filters' => $request->only('desa_id'),
+            'isAdminDesa' => $user->isAdminDesa(),
         ]);
     }
 
@@ -90,8 +98,13 @@ class WilayahController extends Controller
 
     public function kelompokUpdate(Request $request, Kelompok $kelompok)
     {
+        $user = auth()->user();
+
+        if ($user->isAdminDesa() && $kelompok->desa_id !== $user->desa_id) {
+            abort(403, 'Anda tidak memiliki akses ke kelompok ini');
+        }
+
         $validated = $request->validate([
-            'desa_id' => 'required|exists:desas,id',
             'nama_kelompok' => 'required|string|max:100',
         ]);
 
@@ -102,6 +115,12 @@ class WilayahController extends Controller
 
     public function kelompokDestroy(Kelompok $kelompok)
     {
+        $user = auth()->user();
+
+        if (! $user->isSuperAdmin()) {
+            abort(403, 'Hanya Super Admin yang dapat menghapus kelompok.');
+        }
+
         if ($kelompok->jamaahs()->exists()) {
             return back()->with('error', 'Tidak dapat menghapus kelompok yang masih memiliki jamaah.');
         }
@@ -115,6 +134,12 @@ class WilayahController extends Controller
 
     public function getKelompoksByDesa(Desa $desa)
     {
+        $user = auth()->user();
+
+        if ($user->isAdminDesa() && $desa->id !== $user->desa_id) {
+            abort(403, 'Anda tidak memiliki akses ke desa ini.');
+        }
+
         return response()->json(
             $desa->kelompoks()->select('id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
         );

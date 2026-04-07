@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\JamaahStoreRequest;
+use App\Models\Desa;
 use App\Models\Jamaah;
 use App\Models\Kelompok;
-use App\Models\Desa;
-use App\Http\Requests\JamaahStoreRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,9 +19,9 @@ class JamaahController extends Controller
         $user = auth()->user();
         $query = Jamaah::with(['kelompok.desa']);
 
-       // ===== AUTO-SCOPE BASED ON ROLE =====
+        // ===== AUTO-SCOPE BASED ON ROLE =====
         if ($user->isAdminDesa()) {
-            $query->whereHas('kelompok', fn($q) => $q->where('desa_id', $user->desa_id));
+            $query->whereHas('kelompok', fn ($q) => $q->where('desa_id', $user->desa_id));
         } elseif ($user->isAdminKelompok()) {
             $query->where('kelompok_id', $user->kelompok_id);
         }
@@ -121,11 +121,25 @@ class JamaahController extends Controller
                 'kelompok' => $jamaah->kelompok?->nama_kelompok,
             ]);
 
+        $desas = match (true) {
+            $user->isSuperAdmin() => Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get(),
+            $user->isAdminDesa() => Desa::where('id', $user->desa_id)->select('id', 'nama_desa')->get(),
+            $user->isAdminKelompok() => Desa::where('id', $user->desa_id)->select('id', 'nama_desa')->get(),
+            default => collect(),
+        };
+
+        $kelompoks = match (true) {
+            $user->isSuperAdmin() => Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get(),
+            $user->isAdminDesa() => Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get(),
+            $user->isAdminKelompok() => Kelompok::where('id', $user->kelompok_id)->select('id', 'desa_id', 'nama_kelompok')->get(),
+            default => collect(),
+        };
+
         return Inertia::render('Jamaah/Index', [
             'jamaahs' => $jamaahs,
             'filters' => $request->only(['search', 'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan', 'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh']),
-            'desas' => Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get(),
-            'kelompoks' => Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get(),
+            'desas' => $desas,
+            'kelompoks' => $kelompoks,
             'dropdowns' => [
                 'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
                 'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
@@ -139,16 +153,16 @@ class JamaahController extends Controller
     public function create()
     {
         $user = auth()->user();
-        
+
         // Scope desas and kelompoks based on role
-        $desas = $user->isSuperAdmin() 
+        $desas = $user->isSuperAdmin()
             ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
             : Desa::where('id', $user->desa_id)->get();
-        
+
         $kelompoks = $user->isSuperAdmin()
             ? Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
             : Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get();
-        
+
         return Inertia::render('Jamaah/Create', [
             'desas' => $desas,
             'kelompoks' => $kelompoks,
@@ -227,23 +241,23 @@ class JamaahController extends Controller
     public function edit(Jamaah $jamaah)
     {
         $user = auth()->user();
-        
+
         // Security: Check access to this jamaah
         if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di kelompok lain');
         }
-        
+
         // Scope dropdown options
         $desas = $user->isSuperAdmin()
             ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
             : Desa::where('id', $user->desa_id)->get();
-        
+
         $kelompoks = $user->isSuperAdmin()
             ? Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
             : Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get();
-        
+
         return Inertia::render('Jamaah/Edit', [
             'jamaah' => [
                 'id' => $jamaah->id,
@@ -294,7 +308,7 @@ class JamaahController extends Controller
             'pendidikan_aktivitas' => 'nullable|string|max:100|regex:/^[a-zA-Z0-9\s\.\-]+$/',
             'no_telepon' => 'nullable|string|max:20|regex:/^[0-9\+\-\s\(\)]+$/',
             'role_dlm_keluarga' => ['nullable', \Illuminate\Validation\Rule::in(['KEPALA', 'ISTRI', 'ANAK', 'LAINNYA'])],
-            
+
             // Additional fields from original update method that weren't in store request
             'tempat_lahir' => 'nullable|string|max:255',
             'kelas_generus' => 'nullable|string|max:50',
@@ -318,14 +332,14 @@ class JamaahController extends Controller
     public function destroy(Jamaah $jamaah)
     {
         $user = auth()->user();
-        
+
         // Security: Check access to delete this jamaah
         if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa menghapus jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa menghapus jamaah di kelompok lain');
         }
-        
+
         $jamaah->delete();
 
         return redirect()->route('jamaah.index')
@@ -339,12 +353,12 @@ class JamaahController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isSuperAdmin()) {
+        if (! $user->isSuperAdmin()) {
             abort(403, 'Akses ditolak. Fitur ini hanya untuk Super Admin.');
         }
 
         Jamaah::truncate();
-        
+
         return redirect()->route('jamaah.index')->with('success', 'Seluruh data jamaah berhasil dikosongkan!');
     }
 }
