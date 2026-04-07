@@ -137,7 +137,7 @@ const formatRole = (role) => {
                 <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
                     Kelola Admin
                 </h2>
-                <PrimaryButton @click="openCreateModal">
+                <PrimaryButton type="button" @click="openCreateModal">
                     + Tambah Admin
                 </PrimaryButton>
             </div>

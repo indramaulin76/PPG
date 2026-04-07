@@ -2,23 +2,20 @@
 defineProps({
     type: {
         type: String,
-        default: 'button',
+        default: 'submit',
     },
-    disabled: Boolean,
-    class: {
-        type: String,
-        default: '',
+    disabled: {
+        type: Boolean,
+        default: false,
     },
 });
-defineEmits(['click']);
 </script>
 
 <template>
     <button
-        type="button"
-        class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-wider hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-25"
+        :type="type"
         :disabled="disabled"
-        @click="$emit('click', $event)"
+        class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-wider hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150 disabled:opacity-25"
     >
         <slot />
     </button>
