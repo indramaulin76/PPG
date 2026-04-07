@@ -52,7 +52,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
         ];
     }
-    
+
     // ... constants and relations ...
 
     // ============================================
@@ -67,8 +67,11 @@ class User extends Authenticatable
     // Role Constants (3-Tier Admin System + Developer)
     // ============================================
     const ROLE_DEVELOPER = 'developer';
+
     const ROLE_SUPER_ADMIN = 'super_admin';
+
     const ROLE_ADMIN_DESA = 'admin_desa';
+
     const ROLE_ADMIN_KELOMPOK = 'admin_kelompok';
 
     // ============================================
@@ -112,20 +115,25 @@ class User extends Authenticatable
      */
     public function canManageUser(User $user): bool
     {
-        // Developer can manage everyone including Super Admin
-        if ($this->isDeveloper()) return true;
-
-        // Super admin can manage everyone except Developer and other Super Admins (by convention, but let's allow managing other super admins if needed, though usually they manage lower tiers)
-        if ($this->isSuperAdmin()) {
-            if ($user->isDeveloper()) return false;
+        if ($this->isDeveloper()) {
             return true;
         }
-        
-        // Admin Desa can manage Admin Kelompok in their desa
+
+        if ($this->isSuperAdmin()) {
+            if ($user->isDeveloper()) {
+                return false;
+            }
+            if ($user->isSuperAdmin()) {
+                return false;
+            }
+
+            return true;
+        }
+
         if ($this->isAdminDesa() && $user->isAdminKelompok()) {
             return $user->desa_id === $this->desa_id;
         }
-        
+
         return false;
     }
 
@@ -139,15 +147,17 @@ class User extends Authenticatable
         } elseif ($this->isSuperAdmin()) {
             return 'Seluruh Sistem';
         } elseif ($this->isAdminDesa()) {
-            return 'Desa ' . ($this->desa?->nama_desa ?? 'N/A');
+            return 'Desa '.($this->desa?->nama_desa ?? 'N/A');
         } elseif ($this->isAdminKelompok()) {
-            return 'Kelompok ' . ($this->kelompok?->nama_kelompok ?? 'N/A');
+            return 'Kelompok '.($this->kelompok?->nama_kelompok ?? 'N/A');
         }
+
         return 'N/A';
     }
 
     /**
      * Legacy compatibility - kept for backward compatibility
+     *
      * @deprecated Use isSuperAdmin() instead
      */
     public function isAdmin(): bool
@@ -164,7 +174,7 @@ class User extends Authenticatable
             self::ROLE_DEVELOPER,
             self::ROLE_SUPER_ADMIN,
             self::ROLE_ADMIN_DESA,
-            self::ROLE_ADMIN_KELOMPOK
+            self::ROLE_ADMIN_KELOMPOK,
         ]);
     }
 }
