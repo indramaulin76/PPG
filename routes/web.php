@@ -34,30 +34,26 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Kelompok - Super Admin can manage (full), Admin Desa can only view & edit
-        Route::middleware(['role:super_admin'])->group(function () {
+        Route::middleware(['auth'])->group(function () {
             Route::get('/kelompok', [WilayahController::class, 'kelompokIndex'])->name('kelompok.index');
-            Route::post('/kelompok', [WilayahController::class, 'kelompokStore'])->name('kelompok.store');
             Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
+        });
+
+        Route::middleware(['role:super_admin'])->group(function () {
+            Route::post('/kelompok', [WilayahController::class, 'kelompokStore'])->name('kelompok.store');
             Route::delete('/kelompok/{kelompok}', [WilayahController::class, 'kelompokDestroy'])->name('kelompok.destroy');
         });
-
-        Route::middleware(['role:admin_desa'])->group(function () {
-            Route::get('/kelompok', [WilayahController::class, 'kelompokIndex'])->name('kelompok.index');
-            Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
-        });
     });
 
-    // Admin Management - Super Admin only (create/delete), Admin Desa can only view & edit admin kelompok
+    // Admin Management - Super Admin and Admin Desa (authorization handled in controller)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/admin', [AdminManagementController::class, 'index'])->name('admin.index');
+        Route::put('/admin/{admin}', [AdminManagementController::class, 'update'])->name('admin.update');
+    });
+
     Route::middleware(['role:super_admin'])->group(function () {
-        Route::get('/admin', [AdminManagementController::class, 'index'])->name('admin.index');
         Route::post('/admin', [AdminManagementController::class, 'store'])->name('admin.store');
-        Route::put('/admin/{admin}', [AdminManagementController::class, 'update'])->name('admin.update');
         Route::delete('/admin/{admin}', [AdminManagementController::class, 'destroy'])->name('admin.destroy');
-    });
-
-    Route::middleware(['role:admin_desa'])->group(function () {
-        Route::get('/admin', [AdminManagementController::class, 'index'])->name('admin.index');
-        Route::put('/admin/{admin}', [AdminManagementController::class, 'update'])->name('admin.update');
     });
 
     // Web Settings - Super Admin only
