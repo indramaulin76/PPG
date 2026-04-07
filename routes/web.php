@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\JamaahController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WilayahController;
 use Illuminate\Support\Facades\Route;
 
