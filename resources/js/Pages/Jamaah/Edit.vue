@@ -240,7 +240,7 @@ const formatDropdownOptions = (items) => {
                     </div>
                     <Input
                         v-model="form.pendidikan_aktivitas"
-                        label="Pendidikan/Aktivitas (Legacy)"
+                        label="Catatan"
                         placeholder="Untuk data lama"
                         :error="form.errors.pendidikan_aktivitas"
                     />

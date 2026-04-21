@@ -81,7 +81,7 @@ const deleteDesa = () => {
         </template>
 
         <div class="space-y-4">
-            <div class="flex justify-end" v-if="userRole === 'super_admin'">
+            <div class="flex justify-end" v-if="userRole === 'super_admin' || userRole === 'developer'">
                 <Button variant="primary" @click="openCreate">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -109,7 +109,7 @@ const deleteDesa = () => {
                             <td class="px-6 py-4 text-sm text-gray-500">{{ desa.kode_desa || '-' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ desa.kelompoks_count }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ desa.jamaahs_count }}</td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2" v-if="userRole === 'super_admin'">
+                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2" v-if="userRole === 'super_admin' || userRole === 'developer'">
                                 <button class="text-yellow-600 hover:text-yellow-900" @click="openEdit(desa)">Edit</button>
                                 <button class="text-red-600 hover:text-red-900" @click="confirmDelete(desa.id, desa.nama_desa)">Hapus</button>
                             </td>

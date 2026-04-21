@@ -24,6 +24,12 @@ class WilayahController extends Controller
 
     public function desaStore(Request $request)
     {
+        $user = auth()->user();
+
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat menambahkan desa.');
+        }
+
         $validated = $request->validate([
             'nama_desa' => 'required|string|max:100|unique:desas',
             'kode_desa' => 'nullable|string|max:20',
@@ -36,6 +42,12 @@ class WilayahController extends Controller
 
     public function desaUpdate(Request $request, Desa $desa)
     {
+        $user = auth()->user();
+
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat mengedit desa.');
+        }
+
         $validated = $request->validate([
             'nama_desa' => 'required|string|max:100|unique:desas,nama_desa,'.$desa->id,
             'kode_desa' => 'nullable|string|max:20',
@@ -48,6 +60,12 @@ class WilayahController extends Controller
 
     public function desaDestroy(Desa $desa)
     {
+        $user = auth()->user();
+
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat menghapus desa.');
+        }
+
         if ($desa->kelompoks()->exists()) {
             return back()->with('error', 'Tidak dapat menghapus desa yang masih memiliki kelompok.');
         }
@@ -64,9 +82,10 @@ class WilayahController extends Controller
         $user = auth()->user();
         $query = Kelompok::with('desa')->withCount('jamaahs');
 
+        // Super Admin dan Developer bisa lihat semua, Admin Desa lihat hanya desa sendiri
         if ($user->isAdminDesa()) {
             $query->where('desa_id', $user->desa_id);
-        } elseif ($request->filled('desa_id')) {
+        } elseif ($request->filled('desa_id') && !$user->isSuperAdmin() && !$user->isDeveloper()) {
             $query->where('desa_id', $request->desa_id);
         }
 
@@ -88,8 +107,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat menambahkan kelompok.');
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat menambahkan kelompok.');
         }
 
         $validated = $request->validate([
@@ -106,8 +125,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat mengedit kelompok.');
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat mengedit kelompok.');
         }
 
         $validated = $request->validate([
@@ -123,8 +142,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat menghapus kelompok.');
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Hanya Super Admin atau Developer yang dapat menghapus kelompok.');
         }
 
         if ($kelompok->jamaahs()->exists()) {
@@ -142,7 +161,8 @@ class WilayahController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isAdminDesa() && $desa->id !== $user->desa_id) {
+        // Super Admin dan Developer bisa akses semua desa
+        if (!$user->isSuperAdmin() && !$user->isDeveloper() && $user->isAdminDesa() && $desa->id !== $user->desa_id) {
             abort(403, 'Anda tidak memiliki akses ke desa ini.');
         }
 

@@ -278,7 +278,13 @@ class JamaahCSVImportService
                 'role_dlm_keluarga' => 'LAINNYA',
             ];
 
-            Jamaah::create($jamaahData);
+            Jamaah::updateOrCreate(
+                [
+                    'nama_lengkap' => trim($namaLengkap),
+                    'kelompok_id' => $kelompokId,
+                ],
+                $jamaahData
+            );
             $this->successCount++;
         } catch (\Exception $e) {
             $this->errorCount++;

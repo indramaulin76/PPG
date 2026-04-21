@@ -362,8 +362,8 @@ class JamaahController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isSuperAdmin()) {
-            abort(403, 'Akses ditolak. Fitur ini hanya untuk Super Admin.');
+        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+            abort(403, 'Akses ditolak. Fitur ini hanya untuk Super Admin atau Developer.');
         }
 
         Jamaah::truncate();

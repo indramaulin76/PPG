@@ -140,7 +140,7 @@ const formatRole = (role) => {
                 <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
                     Kelola Admin
                 </h2>
-                <PrimaryButton type="button" @click="openCreateModal" v-if="userRole === 'super_admin'">
+                <PrimaryButton type="button" @click="openCreateModal" v-if="userRole === 'super_admin' || userRole === 'developer'">
                     + Tambah Admin
                 </PrimaryButton>
             </div>
@@ -217,8 +217,8 @@ const formatRole = (role) => {
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-medium">
-                                <button v-if="userRole === 'super_admin' || userRole === 'admin_desa'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
-                                <button v-if="userRole === 'super_admin'" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
+                                <button v-if="userRole === 'super_admin' || userRole === 'developer' || userRole === 'admin_desa'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
+                                <button v-if="userRole === 'super_admin' || userRole === 'developer'" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
                             </td>
                         </tr>
                         <tr v-if="admins.data.length === 0">

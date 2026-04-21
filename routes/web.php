@@ -16,8 +16,8 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard - all authenticated users
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Jamaah bulk delete (Super Admin only)
-    Route::middleware(['role:super_admin'])->group(function () {
+    // Jamaah bulk delete (Super Admin & Developer)
+    Route::middleware(['role:super_admin,developer'])->group(function () {
         Route::delete('jamaah/destroy-all', [JamaahController::class, 'destroyAll'])->name('jamaah.destroy-all');
     });
 
@@ -26,20 +26,21 @@ Route::middleware(['auth'])->group(function () {
 
     // Wilayah Management
     Route::prefix('wilayah')->name('wilayah.')->group(function () {
-        // Desa - only Super Admin can modify
-        Route::middleware(['role:super_admin'])->group(function () {
+        // Desa - Super Admin & Developer can modify
+        Route::middleware(['role:super_admin,developer'])->group(function () {
             Route::get('/desa', [WilayahController::class, 'desaIndex'])->name('desa.index');
             Route::post('/desa', [WilayahController::class, 'desaStore'])->name('desa.store');
             Route::put('/desa/{desa}', [WilayahController::class, 'desaUpdate'])->name('desa.update');
             Route::delete('/desa/{desa}', [WilayahController::class, 'desaDestroy'])->name('desa.destroy');
         });
 
-        // Kelompok - Super Admin only for CRUD, all can view
+        // Kelompok - all can view
         Route::middleware(['auth'])->group(function () {
             Route::get('/kelompok', [WilayahController::class, 'kelompokIndex'])->name('kelompok.index');
         });
 
-        Route::middleware(['role:super_admin'])->group(function () {
+        // Kelompok - Super Admin & Developer can modify
+        Route::middleware(['role:super_admin,developer'])->group(function () {
             Route::post('/kelompok', [WilayahController::class, 'kelompokStore'])->name('kelompok.store');
             Route::put('/kelompok/{kelompok}', [WilayahController::class, 'kelompokUpdate'])->name('kelompok.update');
             Route::delete('/kelompok/{kelompok}', [WilayahController::class, 'kelompokDestroy'])->name('kelompok.destroy');
@@ -52,7 +53,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/admin/{admin}', [AdminManagementController::class, 'update'])->name('admin.update');
     });
 
-    Route::middleware(['role:super_admin'])->group(function () {
+    Route::middleware(['role:super_admin,developer'])->group(function () {
         Route::post('/admin', [AdminManagementController::class, 'store'])->name('admin.store');
         Route::delete('/admin/{admin}', [AdminManagementController::class, 'destroy'])->name('admin.destroy');
     });

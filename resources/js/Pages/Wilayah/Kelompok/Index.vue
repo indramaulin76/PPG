@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Button from '@/Components/UI/Button.vue';
+import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
+import Modal from '@/Components/UI/Modal.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
 
 const props = defineProps({
@@ -19,6 +22,68 @@ const filterDesa = ref(props.filters?.desa_id || '');
 watch(filterDesa, (val) => {
     router.get(route('wilayah.kelompok.index'), { desa_id: val }, { preserveState: true });
 });
+
+const showModal = ref(false);
+const editMode = ref(false);
+const editId = ref(null);
+
+const form = useForm({
+    desa_id: '',
+    nama_kelompok: '',
+});
+
+const openCreate = () => {
+    editMode.value = false;
+    editId.value = null;
+    form.reset();
+    showModal.value = true;
+};
+
+const openEdit = (kelompok) => {
+    editMode.value = true;
+    editId.value = kelompok.id;
+    form.desa_id = kelompok.desa_id;
+    form.nama_kelompok = kelompok.nama_kelompok;
+    showModal.value = true;
+};
+
+const submit = () => {
+    if (editMode.value) {
+        form.put(route('wilayah.kelompok.update', editId.value), {
+            onSuccess: () => {
+                showModal.value = false;
+                form.reset();
+            },
+        });
+    } else {
+        form.post(route('wilayah.kelompok.store'), {
+            onSuccess: () => {
+                showModal.value = false;
+                form.reset();
+            },
+        });
+    }
+};
+
+const showDeleteModal = ref(false);
+const deleteId = ref(null);
+const deleteName = ref('');
+
+const confirmDelete = (id, name) => {
+    deleteId.value = id;
+    deleteName.value = name;
+    showDeleteModal.value = true;
+};
+
+const deleteKelompok = () => {
+    router.delete(route('wilayah.kelompok.destroy', deleteId.value), {
+        onSuccess: () => {
+            showDeleteModal.value = false;
+            deleteId.value = null;
+            deleteName.value = '';
+        },
+    });
+};
 </script>
 
 <template>
@@ -29,7 +94,7 @@ watch(filterDesa, (val) => {
 
         <div class="space-y-4">
             <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div class="w-64" v-if="userRole === 'super_admin'">
+                <div class="w-64" v-if="userRole === 'super_admin' || userRole === 'developer'">
                     <Select
                         v-model="filterDesa"
                         :options="desas"
@@ -38,6 +103,12 @@ watch(filterDesa, (val) => {
                         placeholder="Filter by Desa"
                     />
                 </div>
+                <Button variant="primary" @click="openCreate" v-if="userRole === 'super_admin' || userRole === 'developer'">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Kelompok
+                </Button>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -48,6 +119,7 @@ watch(filterDesa, (val) => {
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kelompok</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Desa</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jml Jamaah</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -56,9 +128,13 @@ watch(filterDesa, (val) => {
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ kelompok.nama_kelompok }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.desa?.nama_desa || '-' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.jamaahs_count }}</td>
+                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2" v-if="userRole === 'super_admin' || userRole === 'developer'">
+                                <button class="text-yellow-600 hover:text-yellow-900" @click="openEdit(kelompok)">Edit</button>
+                                <button class="text-red-600 hover:text-red-900" @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)">Hapus</button>
+                            </td>
                         </tr>
                         <tr v-if="kelompoks.data.length === 0">
-                            <td colspan="4" class="px-6 py-12 text-center text-gray-500">Belum ada data kelompok.</td>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">Belum ada data kelompok.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -67,5 +143,36 @@ watch(filterDesa, (val) => {
                 </div>
             </div>
         </div>
+
+        <!-- Create/Edit Modal -->
+        <Modal :show="showModal" :title="editMode ? 'Edit Kelompok' : 'Tambah Kelompok Baru'" @close="showModal = false">
+            <form @submit.prevent="submit" class="space-y-4">
+                <div v-if="!editMode">
+                    <Select
+                        v-model="form.desa_id"
+                        :options="desas"
+                        option-value="id"
+                        option-label="nama_desa"
+                        label="Desa"
+                        required
+                    />
+                </div>
+                <Input v-model="form.nama_kelompok" label="Nama Kelompok" required />
+                <div class="flex justify-end space-x-2">
+                    <Button type="button" variant="secondary" @click="showModal = false">Batal</Button>
+                    <Button type="submit">{{ editMode ? 'Update' : 'Simpan' }}</Button>
+                </div>
+            </form>
+        </Modal>
+
+        <!-- Delete Confirmation Modal -->
+        <Modal :show="showDeleteModal" title="Hapus Kelompok" @close="showDeleteModal = false">
+            <p class="text-gray-600">Apakah Anda yakin ingin menghapus kelompok "{{ deleteName }}"?</p>
+            <p class="text-sm text-red-600 mt-1">Data kelompok yang memiliki jamaa tidak bisa dihapus.</p>
+            <div class="flex justify-end space-x-2 mt-4">
+                <Button type="button" variant="secondary" @click="showDeleteModal = false">Batal</Button>
+                <Button type="button" variant="danger" @click="deleteKelompok">Hapus</Button>
+            </div>
+        </Modal>
     </AppLayout>
 </template>

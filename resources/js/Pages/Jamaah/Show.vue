@@ -30,7 +30,7 @@ const infoItems = [
     { label: 'Pekerjaan', key: 'pekerjaan' },
     { label: 'Dapukan Organisasi', key: 'dapukan' },
     { label: 'Minat KBM', key: 'minat_kbm' },
-    { label: 'Pendidikan/Aktivitas (Legacy)', key: 'pendidikan_aktivitas' },
+    { label: 'Catatan', key: 'pendidikan_aktivitas' },
 ];
 </script>
 

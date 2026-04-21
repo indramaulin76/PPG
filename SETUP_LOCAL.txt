@@ -1,0 +1,111 @@
+# Setup Local Development - SI-JEMAAH
+# ========================================
+
+## 1. Install PHP MySQL Extension
+# -----------------------------
+
+### Arch Linux (pacman):
+sudo pacman -S php-mysql
+
+### Ubuntu/Debian (apt):
+sudo apt install php-mysql php-sqlite3
+
+### Fedora/RHEL (dnf):
+sudo dnf install php-mysqlnd php-sqlite3
+
+### Atau manual enable extension:
+Edit file /etc/php/php.ini - hilangkan comment pada baris:
+extension=mysqli
+extension=pdo_mysql
+
+### Setelah install, restart PHP-FPM:
+sudo systemctl restart php-fpm
+
+
+## 2. Setup MySQL Database
+# ---------------------
+
+### Login ke MariaDB/MySQL:
+sudo mariadb
+
+### Buat database dan user:
+CREATE DATABASE IF NOT EXISTS ppg;
+GRANT ALL PRIVILEGES ON ppg.* TO 'root'@'localhost' IDENTIFIED BY '';
+FLUSH PRIVILEGES;
+EXIT;
+
+### Atau jika pakai password:
+CREATE DATABASE IF NOT EXISTS ppg;
+CREATE USER IF NOT EXISTS 'ppg'@'localhost' IDENTIFIED BY 'password_anda';
+GRANT ALL PRIVILEGES ON ppg.* TO 'ppg'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+
+## 3. Konfigurasi Environment
+# ---------------------
+
+### Copy .env.example ke .env:
+cp .env.example .env
+
+### Edit konfigurasi database di .env:
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ppg
+DB_USERNAME=root
+DB_PASSWORD=  # kosongkan jika tidak pakai password
+
+### Generate app key:
+php artisan key:generate
+
+### Install dependencies:
+composer install --ignore-platform-req=ext-gd --ignore-platform-req=ext-iconv
+npm install --legacy-peer-deps
+
+
+## 4. Setup Database
+# ---------------
+
+### Run migrations:
+php artisan migrations
+
+### Seed data (opsional):
+php artisan db:seed
+
+### Create user admin:
+php artisan make:user
+
+
+## 5. Run Application
+# -----------------
+
+### Jalankan server:
+php artisan serve
+
+### Atau pakai Valet (macOS):
+valet install
+valet link ppg
+valet open
+
+### Atau pakai Sail (Docker):
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan migrate
+
+
+## Troubleshooting
+# ----------
+
+### Jika PDO MySQL error:
+php -m | grep pdo_mysql
+# Pastikan output: pdo_mysql
+
+### Cek koneksi database:
+php artisan tinker
+DB::connection()->getPdo();
+
+### Reset all:
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
