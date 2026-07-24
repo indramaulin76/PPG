@@ -20,7 +20,7 @@ class ImportController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|mimetypes:text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel|max:10240',
         ]);
 
         try {

@@ -162,7 +162,19 @@ class WilayahController extends Controller
         $user = auth()->user();
 
         // Super Admin dan Developer bisa akses semua desa
-        if (!$user->isSuperAdmin() && !$user->isDeveloper() && $user->isAdminDesa() && $desa->id !== $user->desa_id) {
+        if ($user->isSuperAdmin() || $user->isDeveloper()) {
+            return response()->json(
+                $desa->kelompoks()->select('id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
+            );
+        }
+
+        // Admin Desa hanya bisa akses desa sendiri
+        if ($user->isAdminDesa() && $desa->id !== $user->desa_id) {
+            abort(403, 'Anda tidak memiliki akses ke desa ini.');
+        }
+
+        // Admin Kelompok hanya bisa akses desa tempat kelompoknya berada
+        if ($user->isAdminKelompok() && $desa->id !== $user->desa_id) {
             abort(403, 'Anda tidak memiliki akses ke desa ini.');
         }
 

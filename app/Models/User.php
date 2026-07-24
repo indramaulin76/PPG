@@ -21,12 +21,23 @@ class User extends Authenticatable
         'name',
         'username',
         'password',
-        'role',
-        'is_active',
         'desa_id',
         'kelompok_id',
         'no_telepon',
     ];
+
+    /**
+     * Fields that can only be set via explicit assignment (not mass assignment).
+     */
+    public function setRole(string $role): void
+    {
+        $this->attributes['role'] = $role;
+    }
+
+    public function setIsActive(bool $active): void
+    {
+        $this->attributes['is_active'] = $active;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

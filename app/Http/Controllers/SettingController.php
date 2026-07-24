@@ -33,7 +33,7 @@ class SettingController extends Controller
     {
         $request->validate([
             'app_name' => 'required|string|max:50',
-            'app_logo' => 'nullable|image|max:2048',
+            'app_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048|dimensions:max_width=2000,max_height=2000',
             'support_whatsapp' => 'nullable|string|max:20|regex:/^[0-9+\-\s()]+$/',
         ]);
 

@@ -206,7 +206,15 @@ class JamaahController extends Controller
      */
     public function show(Jamaah $jamaah)
     {
-        $jamaah->load(['kelompok.desa', 'keluarga']);
+        $user = auth()->user();
+
+        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+            abort(403, 'Anda tidak memiliki akses ke data jamaah ini');
+        } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
+            abort(403, 'Anda tidak memiliki akses ke data jamaah ini');
+        }
+
+        $jamaah->load(['kelompok.desa']);
 
         return Inertia::render('Jamaah/Show', [
             'jamaah' => [

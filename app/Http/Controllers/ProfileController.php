@@ -39,7 +39,8 @@ class ProfileController extends Controller
         ];
 
         if ($request->filled('password') || $request->filled('password_confirmation')) {
-            $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+            $rules['current_password'] = 'required|current_password';
+            $rules['password'] = ['required', 'string', 'min:8', 'confirmed', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'];
         }
 
         $validated = $request->validate($rules);

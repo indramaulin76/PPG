@@ -118,21 +118,26 @@ class AdminManagementController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'  ,
             'role' => ['required', Rule::in($allowedRoles)],
             'desa_id' => 'required_if:role,'.User::ROLE_ADMIN_DESA.'|required_if:role,'.User::ROLE_ADMIN_KELOMPOK.'|nullable|exists:desas,id',
             'kelompok_id' => 'required_if:role,'.User::ROLE_ADMIN_KELOMPOK.'|nullable|exists:kelompoks,id',
             'is_active' => 'sometimes|boolean',
         ]);
 
+        // Extract role and is_active before mass assignment
+        $role = $validated['role'];
+        $isActive = $validated['is_active'] ?? true;
+        unset($validated['role'], $validated['is_active']);
+
         // Fix desa_id validation for Super Admin - it should be null
-        if ($validated['role'] === User::ROLE_SUPER_ADMIN) {
+        if ($role === User::ROLE_SUPER_ADMIN) {
             $validated['desa_id'] = null;
             $validated['kelompok_id'] = null;
         }
 
         // Security check: Admin desa can't create admin desa
-        if ($user->isAdminDesa() && $validated['role'] === User::ROLE_ADMIN_DESA) {
+        if ($user->isAdminDesa() && $role === User::ROLE_ADMIN_DESA) {
             return back()->withErrors(['role' => 'Anda tidak bisa membuat Admin Desa']);
         }
 
@@ -146,12 +151,15 @@ class AdminManagementController extends Controller
         }
 
         // Auto-fill desa_id for admin kelompok if not set
-        if ($validated['role'] === User::ROLE_ADMIN_KELOMPOK && ! isset($validated['desa_id'])) {
+        if ($role === User::ROLE_ADMIN_KELOMPOK && ! isset($validated['desa_id'])) {
             $kelompok = Kelompok::find($validated['kelompok_id']);
             $validated['desa_id'] = $kelompok->desa_id;
         }
 
-        User::create($validated);
+        $admin = User::create($validated);
+        $admin->setRole($role);
+        $admin->setIsActive($isActive);
+        $admin->save();
 
         return back()->with('success', 'Admin berhasil ditambahkan');
     }
@@ -171,11 +179,15 @@ class AdminManagementController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'username' => ['sometimes', 'string', Rule::unique('users')->ignore($admin->id)],
-            'password' => 'sometimes|nullable|string|min:8|confirmed',
+            'password' => 'sometimes|nullable|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
             'is_active' => 'sometimes|boolean',
             'desa_id' => 'sometimes|nullable|exists:desas,id',
             'kelompok_id' => 'sometimes|nullable|exists:kelompoks,id',
         ]);
+
+        // Extract is_active before mass assignment
+        $isActive = $validated['is_active'] ?? null;
+        unset($validated['is_active']);
 
         // Remove password if not provided
         if (empty($validated['password'])) {
@@ -183,6 +195,11 @@ class AdminManagementController extends Controller
         }
 
         $admin->update($validated);
+
+        if ($isActive !== null) {
+            $admin->setIsActive($isActive);
+            $admin->save();
+        }
 
         return back()->with('success', 'Admin berhasil diperbarui');
     }

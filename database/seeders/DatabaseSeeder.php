@@ -8,6 +8,7 @@ use App\Models\Kelompok;
 use App\Models\Keluarga;
 use App\Models\Jamaah;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,16 +23,19 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 2. Buat User Developer (Indra)
-        User::updateOrCreate(
+        $devPassword = env('DEVELOPER_PASSWORD', Str::random(16));
+        $dev = User::updateOrCreate(
             ['username' => 'indra'],
             [
                 'name' => 'Indra Developer',
-                'password' => bcrypt('indra123'),
-                'role' => User::ROLE_DEVELOPER,
-                'is_active' => true
+                'password' => bcrypt($devPassword),
             ]
         );
+        $dev->setRole(User::ROLE_DEVELOPER);
+        $dev->setIsActive(true);
+        $dev->save();
         $this->command->info('✅ User Developer Indra berhasil disiapkan.');
+        $this->command->warn('   Password: ' . $devPassword . ' (simpan di tempat aman!)');
 
         // 3. Masukkan Data Master Desa & Kelompok
         $this->call([
@@ -41,35 +45,47 @@ class DatabaseSeeder extends Seeder
 
         // 4. (Opsional) Buat Akun Admin untuk setiap Desa & Kelompok
         $desas = Desa::all();
+        $adminPasswords = [];
         foreach ($desas as $desa) {
             // Admin Desa
-            User::updateOrCreate(
+            $adminDesaPassword = Str::random(12);
+            $adminDesa = User::updateOrCreate(
                 ['username' => 'admindesa_' . strtolower(str_replace(' ', '', $desa->nama_desa))],
                 [
                     'name' => 'Admin Desa ' . $desa->nama_desa,
-                    'password' => bcrypt('password'),
-                    'role' => User::ROLE_ADMIN_DESA,
+                    'password' => bcrypt($adminDesaPassword),
                     'desa_id' => $desa->id,
-                    'is_active' => true,
                 ]
             );
+            $adminDesa->setRole(User::ROLE_ADMIN_DESA);
+            $adminDesa->setIsActive(true);
+            $adminDesa->save();
+            $adminPasswords[] = "Admin Desa {$desa->nama_desa}: {$adminDesaPassword}";
 
             // Admin Kelompok
             foreach ($desa->kelompoks as $kelompok) {
-                User::updateOrCreate(
+                $adminKlpPassword = Str::random(12);
+                $adminKlp = User::updateOrCreate(
                     ['username' => 'adminklp_' . strtolower(str_replace(' ', '', $kelompok->nama_kelompok))],
                     [
                         'name' => 'Admin Kelompok ' . $kelompok->nama_kelompok,
-                        'password' => bcrypt('password'),
-                        'role' => User::ROLE_ADMIN_KELOMPOK,
+                        'password' => bcrypt($adminKlpPassword),
                         'desa_id' => $desa->id,
                         'kelompok_id' => $kelompok->id,
-                        'is_active' => true,
                     ]
                 );
+                $adminKlp->setRole(User::ROLE_ADMIN_KELOMPOK);
+                $adminKlp->setIsActive(true);
+                $adminKlp->save();
+                $adminPasswords[] = "Admin Kelompok {$kelompok->nama_kelompok}: {$adminKlpPassword}";
             }
         }
         $this->command->info('✅ Akun Admin Desa & Kelompok berhasil disiapkan.');
+        $this->command->warn('--- PASSWORD AKUN (simpan di tempat aman!) ---');
+        foreach ($adminPasswords as $line) {
+            $this->command->warn("  {$line}");
+        }
+        $this->command->warn('---------------------------------------------');
 
         // Ringkasan
         $this->command->info('--- RINGKASAN DATABASE ---');

@@ -23,7 +23,7 @@ Route::middleware(['guest'])->group(function () {
         return back()->withErrors([
             'username' => 'The provided credentials do not match our records.',
         ]);
-    })->name('login.store');
+    })->middleware('throttle:5,1')->name('login.store');
 });
 
 Route::post('/logout', function () {
