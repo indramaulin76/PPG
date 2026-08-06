@@ -30,13 +30,8 @@ class CheckAdminLevel
             return $next($request);
         }
 
-        // Check if user is active
-        if (!$user->is_active) {
-            auth()->logout();
-            return redirect()->route('login')->withErrors([
-                'access' => 'Akun Anda tidak aktif. Hubungi administrator.'
-            ]);
-        }
+        // Note: inactive users are already logged out by EnsureActiveUser,
+        // which runs earlier in the global 'web' middleware group.
 
         // Check if user's role is in the allowed roles
         if (!in_array($user->role, $roles)) {

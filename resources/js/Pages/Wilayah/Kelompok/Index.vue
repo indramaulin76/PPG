@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { useForm, router, usePage } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Input from '@/Components/UI/Input.vue';
 import Select from '@/Components/UI/Select.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
+import { useAuth } from '@/Composables/useAuth';
 
 const props = defineProps({
     kelompoks: Object,
@@ -15,8 +16,7 @@ const props = defineProps({
     isAdminDesa: Boolean,
 });
 
-const page = usePage();
-const userRole = computed(() => page.props.auth?.user?.role);
+const { isSuperAdmin } = useAuth();
 const filterDesa = ref(props.filters?.desa_id || '');
 
 watch(filterDesa, (val) => {
@@ -92,53 +92,73 @@ const deleteKelompok = () => {
             Manajemen Kelompok
         </template>
 
-        <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div class="w-64" v-if="userRole === 'super_admin' || userRole === 'developer'">
-                    <Select
-                        v-model="filterDesa"
-                        :options="desas"
-                        option-value="id"
-                        option-label="nama_desa"
-                        placeholder="Filter by Desa"
-                    />
+        <div class="space-y-4 sm:space-y-6">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <div class="w-full sm:w-64" v-if="isSuperAdmin">
+                        <Select
+                            v-model="filterDesa"
+                            :options="desas"
+                            option-value="id"
+                            option-label="nama_desa"
+                            placeholder="Tampilkan Semua Kelompok"
+                        />
+                    </div>
+                    <Button variant="primary" class="!rounded-xl shadow-lg shadow-blue-100 shrink-0" @click="openCreate" v-if="isSuperAdmin">
+                        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Kelompok
+                    </Button>
                 </div>
-                <Button variant="primary" @click="openCreate" v-if="userRole === 'super_admin' || userRole === 'developer'">
-                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Kelompok
-                </Button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kelompok</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Desa</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jml Jamaah</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="(kelompok, index) in kelompoks.data" :key="kelompok.id" class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ (kelompoks.current_page - 1) * kelompoks.per_page + index + 1 }}</td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ kelompok.nama_kelompok }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.desa?.nama_desa || '-' }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ kelompok.jamaahs_count }}</td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2" v-if="userRole === 'super_admin' || userRole === 'developer'">
-                                <button class="text-yellow-600 hover:text-yellow-900" @click="openEdit(kelompok)">Edit</button>
-                                <button class="text-red-600 hover:text-red-900" @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)">Hapus</button>
-                            </td>
-                        </tr>
-                        <tr v-if="kelompoks.data.length === 0">
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">Belum ada data kelompok.</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="px-6 pb-4">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead>
+                            <tr class="bg-gray-50/50">
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kelompok</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Desa</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Jml Jamaah</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="kelompok in kelompoks.data" :key="kelompok.id" class="group hover:bg-blue-50/30 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-sm mr-3 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300">
+                                            {{ kelompok.nama_kelompok.charAt(0) }}
+                                        </div>
+                                        <div class="text-sm font-bold text-gray-900">{{ kelompok.nama_kelompok }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ kelompok.desa?.nama_desa || '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ kelompok.jamaahs_count }}</td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap" v-if="isSuperAdmin">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button @click="openEdit(kelompok)" class="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all" title="Edit">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L12 14.207H11v-1h1l8.586-8.586z" /></svg>
+                                        </button>
+                                        <button @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="kelompoks.data.length === 0" class="px-6 py-16 text-center text-gray-400 bg-white">
+                    <svg class="mx-auto h-12 w-12 opacity-20 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <p class="text-sm font-bold uppercase tracking-widest">Belum ada data kelompok</p>
+                </div>
+
+                <div class="px-6 py-6 border-t border-gray-50 bg-gray-50/30">
                     <Pagination :links="kelompoks.links" />
                 </div>
             </div>
@@ -169,10 +189,10 @@ const deleteKelompok = () => {
         <Modal :show="showDeleteModal" title="Hapus Kelompok" @close="showDeleteModal = false">
             <p class="text-gray-600">Apakah Anda yakin ingin menghapus kelompok "{{ deleteName }}"?</p>
             <p class="text-sm text-red-600 mt-1">Data kelompok yang memiliki jamaa tidak bisa dihapus.</p>
-            <div class="flex justify-end space-x-2 mt-4">
+            <template #footer>
                 <Button type="button" variant="secondary" @click="showDeleteModal = false">Batal</Button>
                 <Button type="button" variant="danger" @click="deleteKelompok">Hapus</Button>
-            </div>
+            </template>
         </Modal>
     </AppLayout>
 </template>

@@ -22,6 +22,7 @@ const form = useForm({
     tempat_lahir: '',
     tgl_lahir: '',
     jenis_kelamin: '',
+    golongan_darah: '',
     kelas_generus: '',
     status_pernikahan: '',
     kategori_sodaqoh: '',
@@ -76,7 +77,15 @@ const formatDropdownOptions = (items) => {
 
         <form @submit.prevent="submit" class="space-y-6 max-w-5xl">
             <!-- Section 1: Identitas Diri -->
-            <Card title="📋 Identitas Diri">
+            <Card>
+                <template #header>
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900">Identitas Diri</h3>
+                    </div>
+                </template>
                 <div class="space-y-4">
                     <!-- Wilayah -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,8 +135,8 @@ const formatDropdownOptions = (items) => {
                         </div>
                     </div>
 
-                    <!-- Gender & Status Pernikahan -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Gender, Golongan Darah & Status Pernikahan -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Select
                             v-model="form.jenis_kelamin"
                             label="Jenis Kelamin"
@@ -135,6 +144,12 @@ const formatDropdownOptions = (items) => {
                             placeholder="Pilih L/P"
                             :error="form.errors.jenis_kelamin"
                             required
+                        />
+                        <Input
+                            v-model="form.golongan_darah"
+                            label="Golongan Darah"
+                            placeholder="A / B / AB / O"
+                            :error="form.errors.golongan_darah"
                         />
                         <Select
                             v-model="form.status_pernikahan"
@@ -165,7 +180,15 @@ const formatDropdownOptions = (items) => {
             </Card>
 
             <!-- Section 2: Data Keagamaan -->
-            <Card title="🕌 Data Keagamaan">
+            <Card>
+                <template #header>
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900">Data Keagamaan</h3>
+                    </div>
+                </template>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Select
                         v-model="form.kelas_generus"
@@ -192,7 +215,16 @@ const formatDropdownOptions = (items) => {
             </Card>
 
             <!-- Section 3: Profesi & Pendidikan -->
-            <Card title="🎓 Profesi & Pendidikan">
+            <Card>
+                <template #header>
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900">Profesi & Pendidikan</h3>
+                    </div>
+                </template>
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select
@@ -202,11 +234,10 @@ const formatDropdownOptions = (items) => {
                             placeholder="SD / SMP / SMA / S1"
                             :error="form.errors.pendidikan_terakhir"
                         />
-                        <Select
+                        <Input
                             v-model="form.pekerjaan"
                             label="Pekerjaan"
-                            :options="formatDropdownOptions(dropdowns.pekerjaan)"
-                            placeholder="Pilih Pekerjaan"
+                            placeholder="Contoh: Wiraswasta, PNS, Guru"
                             :error="form.errors.pekerjaan"
                         />
                     </div>

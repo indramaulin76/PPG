@@ -15,6 +15,14 @@ Route::middleware(['guest'])->group(function () {
         ]);
 
         if (Auth::attempt($credentials)) {
+            if (! Auth::user()->is_active) {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'username' => 'Akun Anda tidak aktif. Hubungi administrator.',
+                ])->onlyInput('username');
+            }
+
             $request->session()->regenerate();
 
             return redirect()->intended('/');

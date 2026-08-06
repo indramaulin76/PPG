@@ -79,8 +79,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/template/excel', [ImportController::class, 'downloadTemplateExcel'])->name('template.excel');
     });
 
+    // Laporan page - all admin levels (buttons inside are role-gated)
+    Route::get('/laporan', [ImportController::class, 'laporan'])->name('laporan.index');
+
     // Export Jamaah - all admin levels (scoped data)
     Route::get('/export/jamaah', [ImportController::class, 'export'])->name('export.jamaah');
     Route::get('/export/jamaah/excel', [ImportController::class, 'exportExcel'])->name('export.jamaah.excel');
     Route::get('/export/statistik', [ImportController::class, 'exportStatistik'])->name('export.statistik');
+
+    // Laporan Per Desa - Super Admin, Admin Desa & Developer only
+    Route::middleware(['role:super_admin,admin_desa'])->group(function () {
+        Route::get('/export/laporan-desa', [ImportController::class, 'exportLaporanDesa'])->name('export.laporan-desa');
+    });
 }); // End of auth middleware group

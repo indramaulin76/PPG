@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Card from '@/Components/UI/Card.vue';
+import { useAuth } from '@/Composables/useAuth';
 
-const page = usePage();
-const userRole = computed(() => page.props.auth?.user?.role);
+const { userRole, isSuperAdmin } = useAuth();
+// Developer has the same export access as Super Admin.
+const effectiveRole = computed(() => (isSuperAdmin.value ? 'super_admin' : userRole.value));
 
 const exportOptions = [
     {
@@ -21,7 +22,7 @@ const exportOptions = [
         title: 'Laporan Per Desa',
         description: 'Download laporan ringkasan per desa',
         icon: 'chart',
-        action: () => window.location.href = '/export/desa',
+        action: () => window.location.href = '/export/laporan-desa',
         roles: ['super_admin', 'admin_desa'],
     },
     {
@@ -34,7 +35,7 @@ const exportOptions = [
 ];
 
 const visibleOptions = computed(() => {
-    return exportOptions.filter(opt => opt.roles.includes(userRole.value));
+    return exportOptions.filter(opt => opt.roles.includes(effectiveRole.value));
 });
 </script>
 
@@ -66,7 +67,7 @@ const visibleOptions = computed(() => {
                                 </svg>
                                 Excel
                             </Button>
-                            <Button variant="outline" size="sm" @click="option.actionCSV">
+                            <Button variant="secondary" size="sm" @click="option.actionCSV">
                                 <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>

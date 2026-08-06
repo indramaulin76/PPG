@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdminStoreRequest;
+use App\Http\Requests\AdminUpdateRequest;
 use App\Models\Desa;
 use App\Models\Kelompok;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class AdminManagementController extends Controller
@@ -21,12 +22,8 @@ class AdminManagementController extends Controller
         // Build query based on current user's role
         $query = User::query();
 
-        if ($user->isDeveloper()) {
-            // Developer can see all admins including Super Admins (except themselves)
-            $query->whereIn('role', [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK])
-                ->where('id', '!=', $user->id);
-        } elseif ($user->isSuperAdmin()) {
-            // Super admin can see all admin levels except Developer
+        if ($user->isSuperAdmin()) {
+            // Covers both Developer and Super Admin: see all admin levels (except themselves)
             $query->whereIn('role', [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK])
                 ->where('id', '!=', $user->id);
         } elseif ($user->isAdminDesa()) {
@@ -72,14 +69,7 @@ class AdminManagementController extends Controller
             ]);
 
         // Prepare dropdown options
-        if ($user->isDeveloper()) {
-            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
-        } elseif ($user->isSuperAdmin()) {
-            // Super Admin cannot create other Super Admin
-            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
-        } else {
-            $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
-        }
+        $allowedRoles = $user->allowedRolesToManage();
 
         $desas = $user->isSuperAdmin()
             ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
@@ -101,29 +91,11 @@ class AdminManagementController extends Controller
     /**
      * Store a newly created admin
      */
-    public function store(Request $request)
+    public function store(AdminStoreRequest $request)
     {
         $user = auth()->user();
 
-        $allowedRoles = [];
-        if ($user->isDeveloper()) {
-            $allowedRoles = [User::ROLE_SUPER_ADMIN, User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
-        } elseif ($user->isSuperAdmin()) {
-            // Super Admin cannot create other Super Admin
-            $allowedRoles = [User::ROLE_ADMIN_DESA, User::ROLE_ADMIN_KELOMPOK];
-        } else {
-            $allowedRoles = [User::ROLE_ADMIN_KELOMPOK];
-        }
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|unique:users,username',
-            'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'  ,
-            'role' => ['required', Rule::in($allowedRoles)],
-            'desa_id' => 'required_if:role,'.User::ROLE_ADMIN_DESA.'|required_if:role,'.User::ROLE_ADMIN_KELOMPOK.'|nullable|exists:desas,id',
-            'kelompok_id' => 'required_if:role,'.User::ROLE_ADMIN_KELOMPOK.'|nullable|exists:kelompoks,id',
-            'is_active' => 'sometimes|boolean',
-        ]);
+        $validated = $request->validated();
 
         // Extract role and is_active before mass assignment
         $role = $validated['role'];
@@ -167,7 +139,7 @@ class AdminManagementController extends Controller
     /**
      * Update specified admin
      */
-    public function update(Request $request, User $admin)
+    public function update(AdminUpdateRequest $request, User $admin)
     {
         $user = auth()->user();
 
@@ -176,14 +148,23 @@ class AdminManagementController extends Controller
             abort(403, 'Anda tidak bisa mengelola admin ini');
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'username' => ['sometimes', 'string', Rule::unique('users')->ignore($admin->id)],
-            'password' => 'sometimes|nullable|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-            'is_active' => 'sometimes|boolean',
-            'desa_id' => 'sometimes|nullable|exists:desas,id',
-            'kelompok_id' => 'sometimes|nullable|exists:kelompoks,id',
-        ]);
+        $validated = $request->validated();
+
+        // Scope guard: Admin Desa can only manage admins within their own desa.
+        // A malicious request could otherwise move a kelompok admin to another desa.
+        if ($user->isAdminDesa()) {
+            $targetDesaId = $validated['desa_id'] ?? $admin->desa_id;
+            if ($targetDesaId !== $user->desa_id) {
+                return back()->withErrors(['desa_id' => 'Anda hanya bisa mengelola admin di desa Anda']);
+            }
+
+            if (isset($validated['kelompok_id'])) {
+                $kelompok = Kelompok::find($validated['kelompok_id']);
+                if (! $kelompok || $kelompok->desa_id !== $user->desa_id) {
+                    return back()->withErrors(['kelompok_id' => 'Anda hanya bisa mengelola admin di desa Anda']);
+                }
+            }
+        }
 
         // Extract is_active before mass assignment
         $isActive = $validated['is_active'] ?? null;

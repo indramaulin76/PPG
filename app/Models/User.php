@@ -86,6 +86,8 @@ class User extends Authenticatable
 
     const ROLE_ADMIN_KELOMPOK = 'admin_kelompok';
 
+    const PASSWORD_COMPLEXITY_REGEX = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/';
+
     // ============================================
     // Relationships
     // ============================================
@@ -147,6 +149,22 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    /**
+     * Roles this user is allowed to assign when creating/managing other admins.
+     */
+    public function allowedRolesToManage(): array
+    {
+        if ($this->isDeveloper()) {
+            return [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN_DESA, self::ROLE_ADMIN_KELOMPOK];
+        }
+
+        if ($this->isSuperAdmin()) {
+            return [self::ROLE_ADMIN_DESA, self::ROLE_ADMIN_KELOMPOK];
+        }
+
+        return [self::ROLE_ADMIN_KELOMPOK];
     }
 
     /**

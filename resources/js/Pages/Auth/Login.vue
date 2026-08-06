@@ -18,24 +18,30 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
         <Head :title="'Login - ' + ($page.props.global_settings?.app_name || 'SI-JEMAAH')" />
 
-        <div class="max-w-md w-full space-y-8">
+        <!-- Decorative background accents -->
+        <div class="pointer-events-none absolute inset-0 overflow-hidden">
+            <div class="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl"></div>
+            <div class="absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl"></div>
+        </div>
+
+        <div class="relative max-w-md w-full space-y-8">
             <div class="text-center">
-                <div class="mx-auto h-16 w-16 mb-4 flex items-center justify-center shrink-0">
+                <div class="mx-auto h-16 w-16 mb-5 flex items-center justify-center shrink-0">
                     <img v-if="$page.props.global_settings?.app_logo" :src="$page.props.global_settings.app_logo" class="w-full h-full object-contain drop-shadow-xl" alt="Logo" />
-                    <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg">
+                    <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 ring-4 ring-white/60">
                         <svg class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
                 </div>
-                <h2 class="mt-2 text-3xl font-extrabold text-gray-900">{{ $page.props.global_settings?.app_name || 'SI-JEMAAH' }}</h2>
-                <p class="mt-2 text-sm text-gray-600">Sistem Informasi Jamaah Tangerang Barat</p>
+                <h2 class="text-3xl font-black tracking-tight text-gray-900">{{ $page.props.global_settings?.app_name || 'SI-JEMAAH' }}</h2>
+                <p class="mt-2 text-sm font-medium text-gray-500">Kelola data jamaah dengan mudah &amp; terpusat</p>
             </div>
 
-            <form class="mt-8 space-y-6 bg-white py-8 px-6 rounded-2xl shadow-xl" @submit.prevent="submit">
+            <form class="mt-8 space-y-6 bg-white/90 backdrop-blur-sm py-8 px-6 rounded-2xl shadow-xl shadow-blue-900/5 border border-white" @submit.prevent="submit">
                 <div class="space-y-5">
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700">Username</label>

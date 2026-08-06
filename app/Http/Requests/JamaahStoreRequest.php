@@ -27,6 +27,7 @@ class JamaahStoreRequest extends FormRequest
             'tempat_lahir' => 'nullable|string|max:100',
             'tgl_lahir' => 'nullable|date|before:today|after:1900-01-01',
             'jenis_kelamin' => 'required|in:L,P',
+            'golongan_darah' => 'nullable|string|max:20',
             'kelas_generus' => 'nullable|string|max:50',
             'status_pernikahan' => 'nullable|in:BELUM,MENIKAH,JANDA,DUDA',
             'kategori_sodaqoh' => 'nullable|string|max:50',
@@ -76,6 +77,7 @@ class JamaahStoreRequest extends FormRequest
             'pendidikan_aktivitas' => $this->pendidikan_aktivitas ? ucwords(strtolower(trim($this->pendidikan_aktivitas))) : null,
             'no_telepon' => $this->no_telepon ? preg_replace('/[^0-9\+\-\(\)]/', '', $this->no_telepon) : null,
             'jenis_kelamin' => $this->jenis_kelamin ? strtoupper(trim($this->jenis_kelamin)) : null,
+            'golongan_darah' => $this->golongan_darah ? strtoupper(trim($this->golongan_darah)) : null,
             'status_pernikahan' => $this->status_pernikahan ? strtoupper(trim($this->status_pernikahan)) : null,
             'role_dlm_keluarga' => $this->role_dlm_keluarga ? strtoupper(trim($this->role_dlm_keluarga)) : null,
         ]);

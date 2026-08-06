@@ -52,34 +52,18 @@ class JamaahCSVExportService
 
         if (! empty($this->filters['paket'])) {
             $paket = $this->filters['paket'];
-            $paketMapping = [
-                'PAUD' => ['PAUD'],
-                'A' => ['KELAS 1', 'KELAS 2', 'KELAS 3'],
-                'B' => ['KELAS 4', 'KELAS 5', 'KELAS 6'],
-                'C' => ['KELAS 7', 'KELAS 8', 'KELAS 9'],
-                'D' => ['KELAS 10', 'KELAS 11', 'KELAS 12'],
-                'PRA_NIKAH' => ['MUDA-MUDI'],
-            ];
 
             if ($paket === 'UMUM') {
                 $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
-            } elseif (isset($paketMapping[$paket])) {
-                $query->whereIn('kelas_generus', $paketMapping[$paket]);
+            } elseif (isset(Jamaah::PAKET_MAPPING[$paket])) {
+                $query->whereIn('kelas_generus', Jamaah::PAKET_MAPPING[$paket]);
             }
         }
 
         if (! empty($this->filters['kategori_usia'])) {
             $kategori = $this->filters['kategori_usia'];
-            $ranges = [
-                'BALITA' => [0, 5],
-                'ANAK' => [6, 12],
-                'REMAJA' => [13, 17],
-                'PEMUDA' => [18, 40],
-                'DEWASA' => [41, 60],
-                'LANSIA' => [61, 150],
-            ];
-            if (isset($ranges[$kategori])) {
-                $query->byUsia($ranges[$kategori][0], $ranges[$kategori][1]);
+            if (isset(Jamaah::USIA_RANGES[$kategori])) {
+                $query->byUsia(Jamaah::USIA_RANGES[$kategori][0], Jamaah::USIA_RANGES[$kategori][1]);
             }
         }
 
@@ -99,6 +83,7 @@ class JamaahCSVExportService
             'TEMPAT LAHIR',
             'TANGGAL LAHIR',
             'JENIS KELAMIN',
+            'GOLONGAN DARAH',
             'UMUR',
             'PAKET',
             'STATUS PERNIKAHAN',
@@ -125,6 +110,7 @@ class JamaahCSVExportService
                 $this->escapeCSV($jamaah->tempat_lahir ?? ''),
                 $jamaah->tgl_lahir ?? '',
                 $jamaah->jenis_kelamin,
+                $this->escapeCSV($jamaah->golongan_darah ?? ''),
                 $jamaah->age ?? '',
                 $this->escapeCSV($jamaah->kelas_generus ?? ''),
                 $jamaah->status_pernikahan,
@@ -147,6 +133,11 @@ class JamaahCSVExportService
     {
         if (empty($value)) {
             return '';
+        }
+
+        // Neutralize CSV formula injection (=, +, -, @, tab, CR)
+        if (in_array(substr($value, 0, 1), ['=', '+', '-', '@', "\t", "\r"], true)) {
+            $value = "'".$value;
         }
 
         if ($this->delimiter === ';') {

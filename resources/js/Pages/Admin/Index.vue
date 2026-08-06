@@ -1,13 +1,12 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import Modal from '@/Components/UI/Modal.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import Input from '@/Components/UI/Input.vue';
+import Select from '@/Components/UI/Select.vue';
+import Button from '@/Components/UI/Button.vue';
+import { useAuth } from '@/Composables/useAuth';
 
 const props = defineProps({
     admins: Object,
@@ -17,8 +16,7 @@ const props = defineProps({
     kelompoks: Array,
 });
 
-const page = usePage();
-const userRole = computed(() => page.props.auth?.user?.role);
+const { isSuperAdmin, isAdminDesa } = useAuth();
 
 const search = ref(props.filters.search || '');
 const filterDesa = ref(props.filters.desa_id || '');
@@ -140,9 +138,9 @@ const formatRole = (role) => {
                 <h2 class="font-semibold text-lg sm:text-xl text-gray-800 leading-tight">
                     Kelola Admin
                 </h2>
-                <PrimaryButton type="button" @click="openCreateModal" v-if="userRole === 'super_admin' || userRole === 'developer'">
+                <Button type="button" variant="primary" @click="openCreateModal" v-if="isSuperAdmin">
                     + Tambah Admin
-                </PrimaryButton>
+                </Button>
             </div>
         </template>
 
@@ -150,28 +148,17 @@ const formatRole = (role) => {
             <!-- Toolbar -->
             <div class="p-4 border-b border-gray-100">
                 <div class="flex flex-col md:flex-row gap-4">
-                    <div class="relative flex-1">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <TextInput
-                            v-model="search"
-                            placeholder="Cari nama atau username..."
-                            class="pl-10 w-full"
-                        />
+                    <div class="flex-1">
+                        <Input v-model="search" placeholder="Cari nama atau username..." />
                     </div>
                     <div class="w-full md:w-64" v-if="desas.length > 1">
-                        <select 
+                        <Select
                             v-model="filterDesa"
-                            class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                        >
-                            <option value="">Semua Desa</option>
-                            <option v-for="desa in desas" :key="desa.id" :value="desa.id">
-                                {{ desa.nama_desa }}
-                            </option>
-                        </select>
+                            :options="desas"
+                            option-value="id"
+                            option-label="nama_desa"
+                            placeholder="Semua Desa"
+                        />
                     </div>
                 </div>
             </div>
@@ -217,8 +204,8 @@ const formatRole = (role) => {
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-right text-sm font-medium">
-                                <button v-if="userRole === 'super_admin' || userRole === 'developer' || userRole === 'admin_desa'" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
-                                <button v-if="userRole === 'super_admin' || userRole === 'developer'" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
+                                <button v-if="isSuperAdmin || isAdminDesa" @click="openEditModal(admin)" class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
+                                <button v-if="isSuperAdmin" @click="deleteAdmin(admin)" class="text-red-600 hover:text-red-900 font-bold">Hapus</button>
                             </td>
                         </tr>
                         <tr v-if="admins.data.length === 0">
@@ -256,69 +243,59 @@ const formatRole = (role) => {
                 <form @submit.prevent="showCreateModal ? submitCreate() : submitEdit()">
                     <div class="space-y-4">
                         <!-- Name & Email -->
-                        <div>
-                            <InputLabel for="name" value="Nama Lengkap" />
-                            <TextInput id="name" v-model="form.name" type="text" class="mt-1 block w-full" required />
-                            <InputError :message="form.errors.name" class="mt-2" />
-                        </div>
+                        <Input label="Nama Lengkap" v-model="form.name" type="text" required :error="form.errors.name" />
 
-                        <div>
-                            <InputLabel for="username" value="Username" />
-                            <TextInput id="username" v-model="form.username" type="text" class="mt-1 block w-full" required />
-                            <InputError :message="form.errors.username" class="mt-2" />
-                        </div>
+                        <Input label="Username" v-model="form.username" type="text" required :error="form.errors.username" />
 
                         <!-- Role Selection -->
-                        <div>
-                            <InputLabel for="role" value="Role Admin" />
-                            <select id="role" v-model="form.role" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                <option value="" disabled>Pilih Role</option>
-                                <option v-for="role in allowedRoles" :key="role" :value="role">
-                                    {{ formatRole(role) }}
-                                </option>
-                            </select>
-                            <InputError :message="form.errors.role" class="mt-2" />
-                        </div>
+                        <Select
+                            label="Role Admin"
+                            v-model="form.role"
+                            :options="allowedRoles.map(role => ({ value: role, label: formatRole(role) }))"
+                            placeholder="Pilih Role"
+                            required
+                            :error="form.errors.role"
+                        />
 
                         <!-- Scope Selection -->
-                        <div v-if="form.role === 'admin_desa' || form.role === 'admin_kelompok'">
-                            <InputLabel for="desa_id" value="Wilayah Desa" />
-                             <select id="desa_id" v-model="form.desa_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" :disabled="desas.length === 1">
-                                <option value="">Pilih Desa</option>
-                                <option v-for="desa in desas" :key="desa.id" :value="desa.id">
-                                    {{ desa.nama_desa }}
-                                </option>
-                            </select>
-                            <InputError :message="form.errors.desa_id" class="mt-2" />
-                        </div>
+                        <Select
+                            v-if="form.role === 'admin_desa' || form.role === 'admin_kelompok'"
+                            label="Wilayah Desa"
+                            v-model="form.desa_id"
+                            :options="desas"
+                            option-value="id"
+                            option-label="nama_desa"
+                            placeholder="Pilih Desa"
+                            :disabled="desas.length === 1"
+                            :error="form.errors.desa_id"
+                        />
 
-                        <div v-if="form.role === 'admin_kelompok'">
-                            <InputLabel for="kelompok_id" value="Wilayah Kelompok" />
-                             <select id="kelompok_id" v-model="form.kelompok_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                <option value="">Pilih Kelompok</option>
-                                <option v-for="kelompok in filteredKelompoks" :key="kelompok.id" :value="kelompok.id">
-                                    {{ kelompok.nama_kelompok }}
-                                </option>
-                            </select>
-                            <InputError :message="form.errors.kelompok_id" class="mt-2" />
-                        </div>
+                        <Select
+                            v-if="form.role === 'admin_kelompok'"
+                            label="Wilayah Kelompok"
+                            v-model="form.kelompok_id"
+                            :options="filteredKelompoks"
+                            option-value="id"
+                            option-label="nama_kelompok"
+                            placeholder="Pilih Kelompok"
+                            :error="form.errors.kelompok_id"
+                        />
 
                         <!-- Password -->
                         <div class="pt-2">
                             <hr class="my-2" />
                             <p class="text-[10px] text-gray-500 mb-2 uppercase tracking-wider" v-if="showEditModal">Kosongkan jika tidak ingin mengubah password</p>
                         </div>
-                        
-                        <div>
-                            <InputLabel for="password" value="Password" />
-                            <TextInput id="password" v-model="form.password" type="password" class="mt-1 block w-full" :required="showCreateModal" />
-                            <InputError :message="form.errors.password" class="mt-2" />
-                        </div>
 
-                        <div>
-                            <InputLabel for="password_confirmation" value="Konfirmasi Password" />
-                            <TextInput id="password_confirmation" v-model="form.password_confirmation" type="password" class="mt-1 block w-full" :required="showCreateModal" />
-                        </div>
+                        <Input label="Password" v-model="form.password" type="password" :required="showCreateModal" :error="form.errors.password" />
+
+                        <Input
+                            label="Konfirmasi Password"
+                            v-model="form.password_confirmation"
+                            type="password"
+                            :required="showCreateModal"
+                            :error="form.errors.password_confirmation"
+                        />
 
                         <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
                              <input type="checkbox" id="is_active" v-model="form.is_active" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
@@ -327,10 +304,10 @@ const formatRole = (role) => {
                     </div>
 
                     <div class="mt-6 flex justify-end gap-3">
-                        <SecondaryButton type="button" @click="closeModal">Batal</SecondaryButton>
-                        <PrimaryButton :disabled="form.processing">
+                        <Button type="button" variant="secondary" @click="closeModal">Batal</Button>
+                        <Button type="submit" variant="primary" :disabled="form.processing" :loading="form.processing">
                             {{ showCreateModal ? 'Simpan Akun' : 'Update Akun' }}
-                        </PrimaryButton>
+                        </Button>
                     </div>
                 </form>
             </div>

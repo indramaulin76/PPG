@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Desa;
 use App\Models\Jamaah;
 use App\Models\Kelompok;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,8 +30,11 @@ class JamaahCSVImportService
 
     private $rawHeader = [];
 
-    public function __construct()
+    private $user = null;
+
+    public function __construct(?User $user = null)
     {
+        $this->user = $user;
         $this->initializeReferenceData();
     }
 
@@ -202,6 +206,7 @@ class JamaahCSVImportService
             'tempat_lahir' => $this->findHeaderFlexible(['TEMPAT LAHIR', 'TEMPAT', 'KOTA LAHIR', 'LOKASI']),
             'tgl_lahir' => $this->findHeaderFlexible(['TANGGAL LAHIR', 'TGL LAHIR', 'TGLLAHIR', 'TANGGAL', 'BORN']),
             'jenis_kelamin' => $this->findHeaderFlexible(['JENIS KELAMIN', 'JENIS KEL', 'L/P', 'JK', 'GENDER', 'SEX']),
+            'golongan_darah' => $this->findHeaderFlexible(['GOLONGAN DARAH', 'GOL DARAH', 'GOL. DARAH', 'BLOOD TYPE']),
             'kelas_generus' => $this->findHeaderFlexible(['KELAS GENERUS', 'KELAS', 'PAKET', 'GENERUS', 'TINGKAT']),
             'status_pernikahan' => $this->findHeaderFlexible(['STATUS PERNIKAHAN', 'STATUS NIKAH', 'NIKAH', 'STATUS']),
             'kategori_sodaqoh' => $this->findHeaderFlexible(['KATAGORI SODAQOH', 'KATEGORI SODAQOH', 'SODAQOH', 'KAT']),
@@ -265,14 +270,15 @@ class JamaahCSVImportService
                 'nama_lengkap' => trim($namaLengkap),
                 'tempat_lahir' => $this->getMappedValue($row, 'tempat_lahir'),
                 'jenis_kelamin' => $this->parseGender($this->getMappedValue($row, 'jenis_kelamin') ?? 'L'),
+                'golongan_darah' => $this->normalizeDropdownValue($this->getMappedValue($row, 'golongan_darah')),
                 'tgl_lahir' => $this->parseDate($this->getMappedValue($row, 'tgl_lahir')),
-                'kelas_generus' => $this->getMappedValue($row, 'kelas_generus'),
+                'kelas_generus' => $this->normalizeDropdownValue($this->getMappedValue($row, 'kelas_generus')),
                 'status_pernikahan' => $this->parseMaritalStatus($this->getMappedValue($row, 'status_pernikahan') ?? 'BELUM'),
-                'kategori_sodaqoh' => $this->getMappedValue($row, 'kategori_sodaqoh'),
+                'kategori_sodaqoh' => $this->normalizeDropdownValue($this->getMappedValue($row, 'kategori_sodaqoh')),
                 'dapukan' => $this->getMappedValue($row, 'dapukan'),
                 'pekerjaan' => $this->getMappedValue($row, 'pekerjaan'),
-                'status_mubaligh' => $this->getMappedValue($row, 'status_mubaligh'),
-                'pendidikan_terakhir' => $this->getMappedValue($row, 'pendidikan_terakhir'),
+                'status_mubaligh' => $this->normalizeDropdownValue($this->getMappedValue($row, 'status_mubaligh')),
+                'pendidikan_terakhir' => $this->normalizeDropdownValue($this->getMappedValue($row, 'pendidikan_terakhir')),
                 'minat_kbm' => $this->getMappedValue($row, 'minat_kbm'),
                 'no_telepon' => $this->getMappedValue($row, 'no_telepon'),
                 'role_dlm_keluarga' => 'LAINNYA',
@@ -304,8 +310,27 @@ class JamaahCSVImportService
         return ! empty(trim($value ?? '')) ? trim($value) : null;
     }
 
+    private function normalizeDropdownValue(?string $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        return strtoupper(trim($value));
+    }
+
     private function handleDesa($row)
     {
+        // Lower-level admins are locked to their own scope and cannot create desa
+        if ($this->user && $this->user->isAdminDesa()) {
+            return $this->user->desa_id;
+        }
+
+        if ($this->user && $this->user->isAdminKelompok()) {
+            return $this->user->desa_id;
+        }
+
+        // Super Admin & Developer: auto-create is allowed
         $namaDesa = strtoupper(trim($this->getMappedValue($row, 'desa') ?? 'LAINNYA'));
         if (! isset($this->desas[$namaDesa])) {
             $desa = Desa::create(['nama_desa' => $namaDesa]);
@@ -317,9 +342,24 @@ class JamaahCSVImportService
 
     private function handleKelompok($desaId, $row)
     {
+        // Admin Kelompok is locked to their own kelompok
+        if ($this->user && $this->user->isAdminKelompok()) {
+            return $this->user->kelompok_id;
+        }
+
         $namaKelompok = strtoupper(trim($this->getMappedValue($row, 'kelompok') ?? 'UMUM'));
         $kelompokKey = $desaId.'-'.$namaKelompok;
 
+        // Admin Desa cannot create kelompok; it must already exist in their desa
+        if ($this->user && $this->user->isAdminDesa()) {
+            if (! isset($this->kelompoks[$kelompokKey])) {
+                throw new \Exception('Kelompok "'.$namaKelompok.'" tidak ditemukan di desa Anda.');
+            }
+
+            return $this->kelompoks[$kelompokKey];
+        }
+
+        // Super Admin & Developer: auto-create is allowed
         if (! isset($this->kelompoks[$kelompokKey])) {
             $kelompok = Kelompok::create([
                 'desa_id' => $desaId,
@@ -396,6 +436,7 @@ class JamaahCSVImportService
                 'TEMPAT LAHIR',
                 'TANGGAL LAHIR',
                 'JENIS KELAMIN',
+                'GOLONGAN DARAH',
                 'PAKET',
                 'STATUS PERNIKAHAN',
                 'KATAGORI SODAQOH',
@@ -413,6 +454,7 @@ class JamaahCSVImportService
                 'Jakarta',
                 '15/05/1990',
                 'L',
+                'O',
                 'Umum',
                 'MENIKAH',
                 'AGNIYA',
@@ -430,6 +472,7 @@ class JamaahCSVImportService
                 'Bandung',
                 '22/08/1992',
                 'P',
+                'AB',
                 'Pra-Nikah',
                 'BELUM',
                 'CALON AGNIYA',

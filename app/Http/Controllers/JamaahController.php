@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\JamaahStoreRequest;
+use App\Http\Requests\JamaahUpdateRequest;
 use App\Models\Desa;
 use App\Models\Jamaah;
 use App\Models\Kelompok;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class JamaahController extends Controller
@@ -54,20 +56,12 @@ class JamaahController extends Controller
         // Filter by Paket (groups of kelas_generus)
         if ($request->filled('paket')) {
             $paket = $request->paket;
-            $paketMapping = [
-                'PAUD' => ['PAUD'],
-                'A' => ['KELAS 1', 'KELAS 2', 'KELAS 3'],
-                'B' => ['KELAS 4', 'KELAS 5', 'KELAS 6'],
-                'C' => ['KELAS 7', 'KELAS 8', 'KELAS 9'],
-                'D' => ['KELAS 10', 'KELAS 11', 'KELAS 12'],
-                'PRA_NIKAH' => ['MUDA-MUDI'],
-            ];
 
             if ($paket === 'UMUM') {
                 // Umum = jamaah yang sudah menikah / janda / duda
                 $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
-            } elseif (isset($paketMapping[$paket])) {
-                $query->whereIn('kelas_generus', $paketMapping[$paket]);
+            } elseif (isset(Jamaah::PAKET_MAPPING[$paket])) {
+                $query->whereIn('kelas_generus', Jamaah::PAKET_MAPPING[$paket]);
             }
         }
 
@@ -84,16 +78,8 @@ class JamaahController extends Controller
         // Filter by age category
         if ($request->filled('kategori_usia')) {
             $kategori = $request->kategori_usia;
-            $ranges = [
-                'BALITA' => [0, 5],
-                'ANAK' => [6, 12],
-                'REMAJA' => [13, 17],
-                'PEMUDA' => [18, 40],
-                'DEWASA' => [41, 60],
-                'LANSIA' => [61, 150],
-            ];
-            if (isset($ranges[$kategori])) {
-                $query->byUsia($ranges[$kategori][0], $ranges[$kategori][1]);
+            if (isset(Jamaah::USIA_RANGES[$kategori])) {
+                $query->byUsia(Jamaah::USIA_RANGES[$kategori][0], Jamaah::USIA_RANGES[$kategori][1]);
             }
         }
 
@@ -106,6 +92,7 @@ class JamaahController extends Controller
                 'tempat_lahir' => $jamaah->tempat_lahir,
                 'tgl_lahir' => $jamaah->tgl_lahir?->format('d/m/Y'),
                 'jenis_kelamin' => $jamaah->jenis_kelamin,
+                'golongan_darah' => $jamaah->golongan_darah,
                 'age' => $jamaah->age,
                 'kategori_usia' => $jamaah->kategori_usia,
                 'kelas_generus' => $jamaah->kelas_generus,
@@ -154,28 +141,12 @@ class JamaahController extends Controller
     {
         $user = auth()->user();
 
-        // Scope desas and kelompoks based on role
-        $desas = $user->isSuperAdmin()
-            ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
-            : Desa::where('id', $user->desa_id)->get();
-
-        $kelompoks = $user->isSuperAdmin()
-            ? Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
-            : Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get();
+        ['desas' => $desas, 'kelompoks' => $kelompoks] = $this->scopedDesasAndKelompoks($user);
 
         return Inertia::render('Jamaah/Create', [
             'desas' => $desas,
             'kelompoks' => $kelompoks,
-            'dropdowns' => [
-                'status_pernikahan' => Jamaah::STATUS_PERNIKAHAN,
-                'kelas_generus' => Jamaah::KELAS_GENERUS,
-                'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
-                'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
-                'pendidikan' => Jamaah::PENDIDIKAN,
-                'dapukan' => Jamaah::DAPUKAN,
-                'pekerjaan' => Jamaah::PEKERJAAN_OPTIONS,
-                'minat_kbm' => Jamaah::MINAT_KBM,
-            ],
+            'dropdowns' => $this->jamaahDropdowns(),
         ]);
     }
 
@@ -189,7 +160,7 @@ class JamaahController extends Controller
 
         // Security: Validate kelompok access
         $kelompok = Kelompok::find($validated['kelompok_id']);
-        if ($user->isAdminDesa() && $kelompok->desa_id !== $user->desa_id) {
+        if ($user->isAdminDesa() && $kelompok?->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa menambahkan jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $validated['kelompok_id'] !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa menambahkan jamaah di kelompok lain');
@@ -208,7 +179,7 @@ class JamaahController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+        if ($user->isAdminDesa() && $jamaah->kelompok?->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak memiliki akses ke data jamaah ini');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak memiliki akses ke data jamaah ini');
@@ -224,6 +195,7 @@ class JamaahController extends Controller
                 'tgl_lahir' => $jamaah->tgl_lahir?->format('Y-m-d'),
                 'age' => $jamaah->age,
                 'jenis_kelamin' => $jamaah->jenis_kelamin,
+                'golongan_darah' => $jamaah->golongan_darah,
                 'kategori_usia' => $jamaah->kategori_usia,
                 'status_pernikahan' => $jamaah->status_pernikahan,
                 'role_dlm_keluarga' => $jamaah->role_dlm_keluarga,
@@ -251,20 +223,14 @@ class JamaahController extends Controller
         $user = auth()->user();
 
         // Security: Check access to this jamaah
-        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+        if ($user->isAdminDesa() && $jamaah->kelompok?->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di kelompok lain');
         }
 
         // Scope dropdown options
-        $desas = $user->isSuperAdmin()
-            ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
-            : Desa::where('id', $user->desa_id)->get();
-
-        $kelompoks = $user->isSuperAdmin()
-            ? Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
-            : Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get();
+        ['desas' => $desas, 'kelompoks' => $kelompoks] = $this->scopedDesasAndKelompoks($user);
 
         return Inertia::render('Jamaah/Edit', [
             'jamaah' => [
@@ -274,6 +240,7 @@ class JamaahController extends Controller
                 'tempat_lahir' => $jamaah->tempat_lahir,
                 'tgl_lahir' => $jamaah->tgl_lahir?->format('Y-m-d'),
                 'jenis_kelamin' => $jamaah->jenis_kelamin,
+                'golongan_darah' => $jamaah->golongan_darah,
                 'kelas_generus' => $jamaah->kelas_generus,
                 'status_pernikahan' => $jamaah->status_pernikahan,
                 'kategori_sodaqoh' => $jamaah->kategori_sodaqoh,
@@ -288,54 +255,35 @@ class JamaahController extends Controller
             ],
             'desas' => $desas,
             'kelompoks' => $kelompoks,
-            'dropdowns' => [
-                'status_pernikahan' => Jamaah::STATUS_PERNIKAHAN,
-                'kelas_generus' => Jamaah::KELAS_GENERUS,
-                'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
-                'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
-                'pendidikan' => Jamaah::PENDIDIKAN,
-                'dapukan' => Jamaah::DAPUKAN,
-                'pekerjaan' => Jamaah::PEKERJAAN_OPTIONS,
-                'minat_kbm' => Jamaah::MINAT_KBM,
-            ],
+            'dropdowns' => $this->jamaahDropdowns(),
         ]);
     }
 
     /**
      * Update the specified jamaah in storage.
      */
-    public function update(Request $request, Jamaah $jamaah)
+    public function update(JamaahUpdateRequest $request, Jamaah $jamaah)
     {
         $user = auth()->user();
 
         // Security: Check access to update this jamaah
-        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+        if ($user->isAdminDesa() && $jamaah->kelompok?->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa mengedit jamaah di kelompok lain');
         }
 
-        $validated = $request->validate([
-            'kelompok_id' => 'required|exists:kelompoks,id',
-            'keluarga_id' => 'nullable|exists:keluargas,id',
-            'nama_lengkap' => 'required|string|max:255|regex:/^[a-zA-Z\s\.\-\'\.]+$/',
-            'tgl_lahir' => 'nullable|date|before:today|after:1900-01-01',
-            'jenis_kelamin' => 'required|in:L,P',
-            'status_pernikahan' => ['nullable', \Illuminate\Validation\Rule::in(\App\Models\Jamaah::STATUS_PERNIKAHAN)],
-            'pendidikan_aktivitas' => 'nullable|string|max:100|regex:/^[a-zA-Z0-9\s\.\-]+$/',
-            'no_telepon' => 'nullable|string|max:20|regex:/^[0-9\+\-\s\(\)]+$/',
-            'role_dlm_keluarga' => ['nullable', \Illuminate\Validation\Rule::in(['KEPALA', 'ISTRI', 'ANAK', 'LAINNYA'])],
+        $validated = $request->validated();
 
-            // Additional fields from original update method that weren't in store request
-            'tempat_lahir' => 'nullable|string|max:255',
-            'kelas_generus' => 'nullable|string|max:50',
-            'kategori_sodaqoh' => 'nullable|string|max:50',
-            'dapukan' => 'nullable|string|max:100',
-            'pekerjaan' => 'nullable|string|max:100',
-            'status_mubaligh' => 'nullable|string|max:50',
-            'pendidikan_terakhir' => 'nullable|string|max:50',
-            'minat_kbm' => 'nullable|string|max:255',
-        ]);
+        // Security: Validate the target kelompok_id is within the acting admin's scope,
+        // otherwise an admin_desa/admin_kelompok could re-point a jamaah they own to a
+        // kelompok outside their scope (same check as store()).
+        $targetKelompok = Kelompok::find($validated['kelompok_id']);
+        if ($user->isAdminDesa() && $targetKelompok?->desa_id !== $user->desa_id) {
+            abort(403, 'Anda tidak bisa memindahkan jamaah ke desa lain');
+        } elseif ($user->isAdminKelompok() && $validated['kelompok_id'] !== $user->kelompok_id) {
+            abort(403, 'Anda tidak bisa memindahkan jamaah ke kelompok lain');
+        }
 
         $jamaah->update($validated);
 
@@ -351,7 +299,7 @@ class JamaahController extends Controller
         $user = auth()->user();
 
         // Security: Check access to delete this jamaah
-        if ($user->isAdminDesa() && $jamaah->kelompok->desa_id !== $user->desa_id) {
+        if ($user->isAdminDesa() && $jamaah->kelompok?->desa_id !== $user->desa_id) {
             abort(403, 'Anda tidak bisa menghapus jamaah di desa lain');
         } elseif ($user->isAdminKelompok() && $jamaah->kelompok_id !== $user->kelompok_id) {
             abort(403, 'Anda tidak bisa menghapus jamaah di kelompok lain');
@@ -370,12 +318,45 @@ class JamaahController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isSuperAdmin() && ! $user->isDeveloper()) {
+        if (! $user->isSuperAdmin()) {
             abort(403, 'Akses ditolak. Fitur ini hanya untuk Super Admin atau Developer.');
         }
 
-        Jamaah::truncate();
+        DB::transaction(function () {
+            Jamaah::query()->delete();
+        });
 
         return redirect()->route('jamaah.index')->with('success', 'Seluruh data jamaah berhasil dikosongkan!');
+    }
+
+    /**
+     * Scope the Desa/Kelompok dropdown options to what the given user is allowed to see.
+     */
+    private function scopedDesasAndKelompoks($user): array
+    {
+        return [
+            'desas' => $user->isSuperAdmin()
+                ? Desa::select('id', 'nama_desa')->orderBy('nama_desa')->get()
+                : Desa::where('id', $user->desa_id)->get(),
+            'kelompoks' => $user->isSuperAdmin()
+                ? Kelompok::select('id', 'desa_id', 'nama_kelompok')->orderBy('nama_kelompok')->get()
+                : Kelompok::where('desa_id', $user->desa_id)->select('id', 'desa_id', 'nama_kelompok')->get(),
+        ];
+    }
+
+    /**
+     * Shared dropdown option lists for the Jamaah create/edit forms.
+     */
+    private function jamaahDropdowns(): array
+    {
+        return [
+            'status_pernikahan' => Jamaah::STATUS_PERNIKAHAN,
+            'kelas_generus' => Jamaah::KELAS_GENERUS,
+            'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
+            'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
+            'pendidikan' => Jamaah::PENDIDIKAN,
+            'dapukan' => Jamaah::DAPUKAN,
+            'minat_kbm' => Jamaah::MINAT_KBM,
+        ];
     }
 }

@@ -1,18 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { useForm, router, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Button from '@/Components/UI/Button.vue';
 import Input from '@/Components/UI/Input.vue';
 import Modal from '@/Components/UI/Modal.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
+import { useAuth } from '@/Composables/useAuth';
 
 const props = defineProps({
     desas: Object,
 });
 
-const page = usePage();
-const userRole = computed(() => page.props.auth?.user?.role);
+const { isSuperAdmin } = useAuth();
 const showModal = ref(false);
 const editMode = ref(false);
 const editId = ref(null);
@@ -80,9 +80,9 @@ const deleteDesa = () => {
             Manajemen Desa
         </template>
 
-        <div class="space-y-4">
-            <div class="flex justify-end" v-if="userRole === 'super_admin' || userRole === 'developer'">
-                <Button variant="primary" @click="openCreate">
+        <div class="space-y-4 sm:space-y-6">
+            <div class="flex justify-end" v-if="isSuperAdmin">
+                <Button variant="primary" class="!rounded-xl shadow-lg shadow-blue-100" @click="openCreate">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -90,36 +90,54 @@ const deleteDesa = () => {
                 </Button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Desa</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jml Kelompok</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jml Jamaah</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="(desa, index) in desas.data" :key="desa.id" class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ (desas.current_page - 1) * desas.per_page + index + 1 }}</td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ desa.nama_desa }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ desa.kode_desa || '-' }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ desa.kelompoks_count }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ desa.jamaahs_count }}</td>
-                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2" v-if="userRole === 'super_admin' || userRole === 'developer'">
-                                <button class="text-yellow-600 hover:text-yellow-900" @click="openEdit(desa)">Edit</button>
-                                <button class="text-red-600 hover:text-red-900" @click="confirmDelete(desa.id, desa.nama_desa)">Hapus</button>
-                            </td>
-                        </tr>
-                        <tr v-if="desas.data.length === 0">
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">Belum ada data desa.</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="px-6 pb-4">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead>
+                            <tr class="bg-gray-50/50">
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Desa</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kode</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Jml Kelompok</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Jml Jamaah</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="desa in desas.data" :key="desa.id" class="group hover:bg-blue-50/30 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-bold text-sm mr-3 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300">
+                                            {{ desa.nama_desa.charAt(0) }}
+                                        </div>
+                                        <div class="text-sm font-bold text-gray-900">{{ desa.nama_desa }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ desa.kode_desa || '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ desa.kelompoks_count }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ desa.jamaahs_count }}</td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap" v-if="isSuperAdmin">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button @click="openEdit(desa)" class="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all" title="Edit">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L12 14.207H11v-1h1l8.586-8.586z" /></svg>
+                                        </button>
+                                        <button @click="confirmDelete(desa.id, desa.nama_desa)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="desas.data.length === 0" class="px-6 py-16 text-center text-gray-400 bg-white">
+                    <svg class="mx-auto h-12 w-12 opacity-20 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <p class="text-sm font-bold uppercase tracking-widest">Belum ada data desa</p>
+                </div>
+
+                <div class="px-6 py-6 border-t border-gray-50 bg-gray-50/30">
                     <Pagination :links="desas.links" />
                 </div>
             </div>

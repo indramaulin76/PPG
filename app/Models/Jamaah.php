@@ -15,6 +15,7 @@ class Jamaah extends Model
         'tempat_lahir',
         'tgl_lahir',
         'jenis_kelamin',
+        'golongan_darah',
         'kelas_generus',
         'status_pernikahan',
         'kategori_sodaqoh',
@@ -36,23 +37,41 @@ class Jamaah extends Model
     const STATUS_PERNIKAHAN = ['BELUM', 'MENIKAH', 'JANDA', 'DUDA'];
     
     const KELAS_GENERUS = [
-        'PAUD',
+        'PRA-PAUD', 'CABERAWIT', 'PAUD',
         'KELAS 1', 'KELAS 2', 'KELAS 3', 'KELAS 4', 'KELAS 5', 'KELAS 6',
         'KELAS 7', 'KELAS 8', 'KELAS 9', 'KELAS 10', 'KELAS 11', 'KELAS 12',
-        'UMUM', 'PELAJAR', 'MUDA-MUDI',
+        'PRA REMAJA', 'UMUM', 'PELAJAR', 'MUDA-MUDI', 'USIA NIKAH', 'SENIOR',
     ];
     
-    const KATEGORI_SODAQOH = ['AGNIYA SUPER plus', 'AGNIYA SUPER', 'AGNIYA', 'CALON AGNIYA', 'MAHASISWA', 'PELAJAR'];
+    const KATEGORI_SODAQOH = ['AGNIYA SUPER PLUS', 'AGNIYA SUPER', 'AGNIYA', 'CALON AGNIYA', 'MAHASISWA', 'PELAJAR'];
     
     const DAPUKAN = ['KI', 'WAKIL KI', 'KU', 'PKU', 'PENEROBOS', 'MT', 'RUKYAH'];
 
     const STATUS_MUBALIGH = ['MT', 'MS', 'ASISTEN'];
 
-    const PEKERJAAN_OPTIONS = ['BEKERJA', 'BELUM BEKERJA'];
-    
     const PENDIDIKAN = ['SD', 'SMP', 'SMA/SMK', 'DIPLOMA', 'S1', 'S2', 'S3'];
 
     const MINAT_KBM = ['PRAMUKA', 'PERSINAS', 'TAHFID', 'FORSGI'];
+
+    // Mapping "paket" filter (grouped kelas_generus values) used across index/exports
+    const PAKET_MAPPING = [
+        'PAUD' => ['PAUD'],
+        'A' => ['KELAS 1', 'KELAS 2', 'KELAS 3'],
+        'B' => ['KELAS 4', 'KELAS 5', 'KELAS 6'],
+        'C' => ['KELAS 7', 'KELAS 8', 'KELAS 9'],
+        'D' => ['KELAS 10', 'KELAS 11', 'KELAS 12'],
+        'PRA_NIKAH' => ['MUDA-MUDI'],
+    ];
+
+    // Age-category ranges [min, max] used across index/exports
+    const USIA_RANGES = [
+        'BALITA' => [0, 5],
+        'ANAK' => [6, 12],
+        'REMAJA' => [13, 17],
+        'PEMUDA' => [18, 40],
+        'DEWASA' => [41, 60],
+        'LANSIA' => [61, 150],
+    ];
 
     /**
      * Relasi N:1 ke Kelompok

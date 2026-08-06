@@ -2,11 +2,8 @@
 import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import Input from '@/Components/UI/Input.vue';
+import Button from '@/Components/UI/Button.vue';
 
 const props = defineProps({
     user: Object,
@@ -88,48 +85,41 @@ const submit = () => {
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Edit Profil</h3>
 
                     <form @submit.prevent="submit" class="space-y-4">
-                        <div>
-                            <InputLabel for="name" value="Nama Lengkap" />
-                            <TextInput id="name" v-model="form.name" type="text" class="mt-1 block w-full" required />
-                            <InputError :message="form.errors.name" class="mt-2" />
-                        </div>
+                        <Input label="Nama Lengkap" v-model="form.name" type="text" required :error="form.errors.name" />
+
+                        <Input label="Username" v-model="form.username" type="text" required :error="form.errors.username" />
 
                         <div>
-                            <InputLabel for="username" value="Username" />
-                            <TextInput id="username" v-model="form.username" type="text" class="mt-1 block w-full" required />
-                            <InputError :message="form.errors.username" class="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="no_telepon" value="Nomor WhatsApp" />
-                            <TextInput id="no_telepon" v-model="form.no_telepon" type="text" placeholder="Contoh: 6281234567890" class="mt-1 block w-full" />
+                            <Input
+                                label="Nomor WhatsApp"
+                                v-model="form.no_telepon"
+                                type="text"
+                                placeholder="Contoh: 6281234567890"
+                                :error="form.errors.no_telepon"
+                            />
                             <p class="mt-1 text-xs text-gray-500">Nomor WhatsApp untuk notifikasi. Format: 6281234567890</p>
-                            <InputError :message="form.errors.no_telepon" class="mt-2" />
                         </div>
 
                         <div class="border-t border-gray-100 pt-4 mt-4">
                             <h4 class="text-sm font-semibold text-gray-700 mb-3">Ubah Password</h4>
                             <p class="text-xs text-gray-500 mb-3">Kosongkan jika tidak ingin mengubah password</p>
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <InputLabel for="password" value="Password Baru" />
-                                    <TextInput id="password" v-model="form.password" type="password" class="mt-1 block w-full" />
-                                    <InputError :message="form.errors.password" class="mt-2" />
-                                </div>
 
-                                <div>
-                                    <InputLabel for="password_confirmation" value="Konfirmasi Password" />
-                                    <TextInput id="password_confirmation" v-model="form.password_confirmation" type="password" class="mt-1 block w-full" />
-                                    <InputError :message="form.errors.password_confirmation" class="mt-2" />
-                                </div>
+                            <div class="space-y-4">
+                                <Input label="Password Baru" v-model="form.password" type="password" :error="form.errors.password" />
+
+                                <Input
+                                    label="Konfirmasi Password"
+                                    v-model="form.password_confirmation"
+                                    type="password"
+                                    :error="form.errors.password_confirmation"
+                                />
                             </div>
                         </div>
 
                         <div class="flex justify-end pt-4">
-                            <PrimaryButton :disabled="form.processing">
+                            <Button type="submit" variant="primary" :disabled="form.processing" :loading="form.processing">
                                 Simpan Perubahan
-                            </PrimaryButton>
+                            </Button>
                         </div>
                     </form>
                 </div>

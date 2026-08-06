@@ -15,6 +15,7 @@ const infoItems = [
     { label: 'Tanggal Lahir', key: 'tgl_lahir' },
     { label: 'Umur', key: 'age', suffix: ' tahun' },
     { label: 'Jenis Kelamin', key: 'jenis_kelamin', badge: true },
+    { label: 'Golongan Darah', key: 'golongan_darah' },
     { label: 'Kategori Usia', key: 'kategori_usia', badge: true },
     { label: 'Status Pernikahan', key: 'status_pernikahan', badge: true },
     { label: 'Peran dalam Keluarga', key: 'role_dlm_keluarga' },

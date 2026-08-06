@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Data/Pagination.vue';
@@ -8,6 +8,7 @@ import DataBadge from '@/Components/Data/DataBadge.vue';
 import FilterDropdown from '@/Components/Data/FilterDropdown.vue';
 import Button from '@/Components/UI/Button.vue';
 import Modal from '@/Components/UI/Modal.vue';
+import { useAuth } from '@/Composables/useAuth';
 
 const props = defineProps({
     jamaahs: Object,
@@ -17,8 +18,7 @@ const props = defineProps({
     dropdowns: Object,
 });
 
-const page = usePage();
-const userRole = computed(() => page.props.auth?.user?.role);
+const { isSuperAdmin } = useAuth();
 const search = ref(props.filters?.search || '');
 const filterValues = ref({
     desa_id: props.filters?.desa_id || '',
@@ -146,7 +146,7 @@ const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
                         </a>
                         
                         <Button 
-                            v-if="userRole === 'super_admin'" 
+                            v-if="isSuperAdmin"
                             variant="danger" 
                             size="sm" 
                             class="!rounded-xl shadow-lg shadow-red-100 shrink-0"

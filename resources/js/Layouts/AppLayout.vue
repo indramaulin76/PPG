@@ -11,6 +11,21 @@ const page = usePage();
 const authUser = page.props.auth?.user;
 
 const sidebarOpen = ref(false);
+
+const formatRole = (role) => {
+    if (!role) return 'Guest';
+    return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
+const roleBadgeColor = (role) => {
+    switch (role) {
+        case 'super_admin': return 'bg-purple-100 text-purple-700';
+        case 'admin_desa': return 'bg-orange-100 text-orange-700';
+        case 'admin_kelompok': return 'bg-blue-100 text-blue-700';
+        case 'developer': return 'bg-red-100 text-red-700';
+        default: return 'bg-gray-100 text-gray-600';
+    }
+};
 </script>
 
 <template>
@@ -54,7 +69,9 @@ const sidebarOpen = ref(false);
                          <div class="flex items-center gap-2 sm:gap-3">
                              <div class="text-right hidden md:block">
                                  <p class="text-sm font-semibold text-gray-900 leading-tight">{{ authUser?.name || 'User' }}</p>
-                                 <p class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">{{ authUser?.role?.replace('_', ' ') || 'Guest' }}</p>
+                                 <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" :class="roleBadgeColor(authUser?.role)">
+                                     {{ formatRole(authUser?.role) }}
+                                 </span>
                              </div>
                              
                              <div class="flex items-center gap-1 sm:gap-2">

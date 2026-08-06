@@ -88,12 +88,13 @@ class DashboardController extends Controller
                 'umur' => $j->age,
             ]);
 
-        // Determine view based on role
+        // Determine view based on role (the `role` column is a DB-level enum
+        // covering exactly these cases, so there is no reachable default).
         $view = match(true) {
             $user->isSuperAdmin() => 'Dashboard/SuperAdmin',
             $user->isAdminDesa() => 'Dashboard/AdminDesa',
             $user->isAdminKelompok() => 'Dashboard/AdminKelompok',
-            default => 'Dashboard',
+            default => abort(403, 'Role tidak dikenali.'),
         };
 
         return Inertia::render($view, [
