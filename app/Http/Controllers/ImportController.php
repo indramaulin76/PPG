@@ -144,7 +144,7 @@ class ImportController extends Controller
 
         $filters = $request->only([
             'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan',
-            'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh', 'search',
+            'kategori_usia', 'kelas_generus', 'kategori_sodaqoh', 'status_mubaligh', 'search',
         ]);
 
         try {
@@ -167,7 +167,7 @@ class ImportController extends Controller
     {
         $filters = $request->only([
             'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan',
-            'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh', 'search',
+            'kategori_usia', 'kelas_generus', 'kategori_sodaqoh', 'status_mubaligh', 'search',
         ]);
 
         try {

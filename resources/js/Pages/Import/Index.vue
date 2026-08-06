@@ -63,7 +63,7 @@ onUnmounted(() => document.removeEventListener('click', onDocumentClick));
                                 <div class="text-sm text-blue-700 space-y-1">
                                     <p class="font-semibold">Kolom yang didukung:</p>
                                     <code class="block bg-blue-100 text-blue-800 text-xs px-3 py-2 rounded-lg font-mono leading-relaxed">
-                                        DESA;KELOMPOK;NAMA LENGKAP;TEMPAT LAHIR;TANGGAL LAHIR;JENIS KELAMIN;GOLONGAN DARAH;PAKET;STATUS PERNIKAHAN;KATAGORI SODAQOH;DAPUKAN;PEKERJAAN;DEWAN GURU;PENDIDIKAN TERAKHIR;KBM YANG DIMINATI;NO TELEPON
+                                        DESA;KELOMPOK;NAMA LENGKAP;TEMPAT LAHIR;TANGGAL LAHIR;JENIS KELAMIN;GOLONGAN DARAH;KELAS GENERUS;STATUS PERNIKAHAN;KATAGORI SODAQOH;DAPUKAN;PEKERJAAN;DEWAN GURU;PENDIDIKAN TERAKHIR;KBM YANG DIMINATI;NO TELEPON
                                     </code>
                                     <p class="text-xs text-blue-600 mt-1">* NO DESA dan NO KELOMPOK tidak diperlukan</p>
                                 </div>

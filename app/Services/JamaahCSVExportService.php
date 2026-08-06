@@ -50,21 +50,12 @@ class JamaahCSVExportService
                 return $query->where('status_mubaligh', $mubaligh);
             });
 
-        if (! empty($this->filters['paket'])) {
-            $paket = $this->filters['paket'];
-
-            if ($paket === 'UMUM') {
-                $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
-            } elseif (isset(Jamaah::PAKET_MAPPING[$paket])) {
-                $query->whereIn('kelas_generus', Jamaah::PAKET_MAPPING[$paket]);
-            }
+        if (! empty($this->filters['kelas_generus'])) {
+            $query->where('kelas_generus', $this->filters['kelas_generus']);
         }
 
         if (! empty($this->filters['kategori_usia'])) {
-            $kategori = $this->filters['kategori_usia'];
-            if (isset(Jamaah::USIA_RANGES[$kategori])) {
-                $query->byUsia(Jamaah::USIA_RANGES[$kategori][0], Jamaah::USIA_RANGES[$kategori][1]);
-            }
+            $query->byKategoriUsia($this->filters['kategori_usia']);
         }
 
         if (! empty($this->filters['search'])) {
@@ -85,7 +76,7 @@ class JamaahCSVExportService
             'JENIS KELAMIN',
             'GOLONGAN DARAH',
             'UMUR',
-            'PAKET',
+            'KELAS GENERUS',
             'STATUS PERNIKAHAN',
             'KATAGORI SODAQOH',
             'DAPUKAN',

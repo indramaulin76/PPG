@@ -53,16 +53,9 @@ class JamaahController extends Controller
             $query->byStatus($request->status_pernikahan);
         }
 
-        // Filter by Paket (groups of kelas_generus)
-        if ($request->filled('paket')) {
-            $paket = $request->paket;
-
-            if ($paket === 'UMUM') {
-                // Umum = jamaah yang sudah menikah / janda / duda
-                $query->whereIn('status_pernikahan', ['MENIKAH', 'JANDA', 'DUDA']);
-            } elseif (isset(Jamaah::PAKET_MAPPING[$paket])) {
-                $query->whereIn('kelas_generus', Jamaah::PAKET_MAPPING[$paket]);
-            }
+        // Filter by Kelas Generus
+        if ($request->filled('kelas_generus')) {
+            $query->where('kelas_generus', $request->kelas_generus);
         }
 
         // Filter by kategori sodaqoh
@@ -77,10 +70,7 @@ class JamaahController extends Controller
 
         // Filter by age category
         if ($request->filled('kategori_usia')) {
-            $kategori = $request->kategori_usia;
-            if (isset(Jamaah::USIA_RANGES[$kategori])) {
-                $query->byUsia(Jamaah::USIA_RANGES[$kategori][0], Jamaah::USIA_RANGES[$kategori][1]);
-            }
+            $query->byKategoriUsia($request->kategori_usia);
         }
 
         $jamaahs = $query->orderBy('nama_lengkap')
@@ -124,10 +114,11 @@ class JamaahController extends Controller
 
         return Inertia::render('Jamaah/Index', [
             'jamaahs' => $jamaahs,
-            'filters' => $request->only(['search', 'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan', 'kategori_usia', 'paket', 'kategori_sodaqoh', 'status_mubaligh']),
+            'filters' => $request->only(['search', 'desa_id', 'kelompok_id', 'jenis_kelamin', 'status_pernikahan', 'kategori_usia', 'kelas_generus', 'kategori_sodaqoh', 'status_mubaligh']),
             'desas' => $desas,
             'kelompoks' => $kelompoks,
             'dropdowns' => [
+                'kelas_generus' => Jamaah::KELAS_GENERUS,
                 'kategori_sodaqoh' => Jamaah::KATEGORI_SODAQOH,
                 'status_mubaligh' => Jamaah::STATUS_MUBALIGH,
             ],

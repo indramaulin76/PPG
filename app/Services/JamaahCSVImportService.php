@@ -437,7 +437,7 @@ class JamaahCSVImportService
                 'TANGGAL LAHIR',
                 'JENIS KELAMIN',
                 'GOLONGAN DARAH',
-                'PAKET',
+                'KELAS GENERUS',
                 'STATUS PERNIKAHAN',
                 'KATAGORI SODAQOH',
                 'DAPUKAN',

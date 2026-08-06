@@ -18,7 +18,7 @@ const props = defineProps({
     dropdowns: Object,
 });
 
-const { isSuperAdmin } = useAuth();
+const { isSuperAdmin, isAdminKelompok } = useAuth();
 const search = ref(props.filters?.search || '');
 const filterValues = ref({
     desa_id: props.filters?.desa_id || '',
@@ -26,7 +26,7 @@ const filterValues = ref({
     jenis_kelamin: props.filters?.jenis_kelamin || '',
     status_pernikahan: props.filters?.status_pernikahan || '',
     kategori_usia: props.filters?.kategori_usia || '',
-    paket: props.filters?.paket || '',
+    kelas_generus: props.filters?.kelas_generus || '',
     kategori_sodaqoh: props.filters?.kategori_sodaqoh || '',
     status_mubaligh: props.filters?.status_mubaligh || '',
 });
@@ -174,6 +174,7 @@ const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
                     :desas="desas"
                     :kelompoks="kelompoks"
                     :dropdowns="dropdowns"
+                    :hide-location-filters="isAdminKelompok"
                     @filter="applyFilters"
                 />
             </div>
@@ -185,47 +186,47 @@ const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead>
                             <tr class="bg-gray-50/50">
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Desa</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kelompok</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Nama Lengkap</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Tempat Lahir</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Tgl Lahir</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">L/P</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kelas Generus</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Status Nikah</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kategori Sodaqoh</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Dapukan</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Pekerjaan</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Dewan Guru</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Pendidikan</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">KBM Diminati</th>
-                                <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap sticky right-0 bg-gray-50/90 backdrop-blur-sm">Aksi</th>
+                                <th v-if="!isAdminKelompok" class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Desa</th>
+                                <th v-if="!isAdminKelompok" class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kelompok</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Nama Lengkap</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Tempat Lahir</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Tgl Lahir</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">L/P</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kelas Generus</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Status Nikah</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Kategori Sodaqoh</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Dapukan</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Pekerjaan</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Dewan Guru</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Pendidikan</th>
+                                <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">KBM Diminati</th>
+                                <th class="px-3 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap sticky right-0 bg-gray-50/90 backdrop-blur-sm">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
                             <tr v-for="jamaah in jamaahs.data" :key="jamaah.id" class="group hover:bg-blue-50/30 transition-colors">
-                                <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ jamaah.desa || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{{ jamaah.kelompok || '-' }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td v-if="!isAdminKelompok" class="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">{{ jamaah.desa || '-' }}</td>
+                                <td v-if="!isAdminKelompok" class="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">{{ jamaah.kelompok || '-' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
                                     <div class="text-sm font-bold text-gray-900">{{ jamaah.nama_lengkap }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.tempat_lahir || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.tgl_lahir || '-' }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.tempat_lahir || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.tgl_lahir || '-' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
                                     <DataBadge :status="jamaah.jenis_kelamin" />
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.kelas_generus || '-' }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.kelas_generus || '-' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">
                                     <DataBadge v-if="jamaah.status_pernikahan" :status="jamaah.status_pernikahan" />
                                     <span v-else class="text-gray-300">—</span>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.kategori_sodaqoh || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.dapukan || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.pekerjaan || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.status_mubaligh || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.pendidikan_terakhir || '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{{ jamaah.minat_kbm || '-' }}</td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-blue-50/30 transition-colors">
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.kategori_sodaqoh || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.dapukan || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.pekerjaan || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.status_mubaligh || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.pendidikan_terakhir || '-' }}</td>
+                                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">{{ jamaah.minat_kbm || '-' }}</td>
+                                <td class="px-3 py-2 text-right whitespace-nowrap sticky right-0 bg-white group-hover:bg-blue-50/30 transition-colors">
                                     <div class="flex items-center justify-end gap-1">
                                         <Link :href="route('jamaah.show', jamaah.id)" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Detail">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -253,7 +254,8 @@ const getExportUrl = (format = 'csv', delimiter = 'semicolon') => {
                                 </div>
                                 <div class="min-w-0">
                                     <div class="text-sm font-bold text-gray-900 truncate">{{ jamaah.nama_lengkap }}</div>
-                                    <div class="text-xs text-gray-500 font-medium">{{ jamaah.desa || '-' }} • {{ jamaah.kelompok || '-' }}</div>
+                                    <div v-if="!isAdminKelompok" class="text-xs text-gray-500 font-medium">{{ jamaah.desa || '-' }} • {{ jamaah.kelompok || '-' }}</div>
+                                    <div v-else-if="jamaah.kelas_generus" class="text-xs text-gray-500 font-medium">{{ jamaah.kelas_generus }}</div>
                                 </div>
                             </Link>
                             <div class="flex gap-1 ml-2">

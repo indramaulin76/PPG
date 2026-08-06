@@ -19,6 +19,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    hideLocationFilters: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['update:modelValue', 'filter']);
@@ -29,7 +33,7 @@ const filters = ref({
     jenis_kelamin: props.modelValue.jenis_kelamin || '',
     status_pernikahan: props.modelValue.status_pernikahan || '',
     kategori_usia: props.modelValue.kategori_usia || '',
-    paket: props.modelValue.paket || '',
+    kelas_generus: props.modelValue.kelas_generus || '',
     kategori_sodaqoh: props.modelValue.kategori_sodaqoh || '',
     status_mubaligh: props.modelValue.status_mubaligh || '',
 });
@@ -57,7 +61,7 @@ const clearFilters = () => {
         jenis_kelamin: '',
         status_pernikahan: '',
         kategori_usia: '',
-        paket: '',
+        kelas_generus: '',
         kategori_sodaqoh: '',
         status_mubaligh: '',
     };
@@ -83,22 +87,12 @@ const statusOptions = [
 ];
 
 const usiaOptions = [
-    { value: 'BALITA', label: 'Balita (0-5 th)' },
-    { value: 'ANAK', label: 'Anak (6-12 th)' },
-    { value: 'REMAJA', label: 'Remaja (13-17 th)' },
-    { value: 'PEMUDA', label: 'Pemuda (18-40 th)' },
-    { value: 'DEWASA', label: 'Dewasa (41-60 th)' },
-    { value: 'LANSIA', label: 'Lansia (60+ th)' },
-];
-
-const paketOptions = [
-    { value: 'PAUD', label: 'PAUD' },
-    { value: 'A', label: 'A (1-3 SD)' },
-    { value: 'B', label: 'B (4-6 SD)' },
-    { value: 'C', label: 'C (1-3 SMP)' },
-    { value: 'D', label: 'D (1-3 SMA/K)' },
-    { value: 'PRA_NIKAH', label: 'Pra-Nikah' },
-    { value: 'UMUM', label: 'Umum' },
+    { value: 'BALITA', label: 'Balita' },
+    { value: 'ANAK', label: 'Anak' },
+    { value: 'REMAJA', label: 'Remaja' },
+    { value: 'PEMUDA', label: 'Pemuda' },
+    { value: 'DEWASA', label: 'Dewasa' },
+    { value: 'LANSIA', label: 'Lansia' },
 ];
 </script>
 
@@ -116,6 +110,7 @@ const paketOptions = [
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Select
+                v-if="!hideLocationFilters"
                 v-model="filters.desa_id"
                 :options="desas"
                 option-value="id"
@@ -124,6 +119,7 @@ const paketOptions = [
                 class="w-full"
             />
             <Select
+                v-if="!hideLocationFilters"
                 v-model="filters.kelompok_id"
                 :options="filteredKelompoks"
                 option-value="id"
@@ -150,9 +146,9 @@ const paketOptions = [
                 class="w-full"
             />
             <Select
-                v-model="filters.paket"
-                :options="paketOptions"
-                placeholder="Paket"
+                v-model="filters.kelas_generus"
+                :options="formatDropdownOptions(dropdowns.kelas_generus)"
+                placeholder="Kelas Generus"
                 class="w-full"
             />
             <Select
