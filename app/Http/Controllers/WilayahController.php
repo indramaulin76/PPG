@@ -66,8 +66,10 @@ class WilayahController extends Controller
             abort(403, 'Hanya Super Admin atau Developer yang dapat menghapus desa.');
         }
 
-        if ($desa->kelompoks()->exists()) {
-            return back()->with('error', 'Tidak dapat menghapus desa yang masih memiliki kelompok.');
+        $kelompokCount = $desa->kelompoks()->count();
+
+        if ($kelompokCount > 0) {
+            return back()->with('error', "Tidak dapat menghapus desa yang masih memiliki {$kelompokCount} kelompok. Hapus kelompoknya terlebih dahulu.");
         }
 
         $desa->delete();
@@ -146,8 +148,10 @@ class WilayahController extends Controller
             abort(403, 'Hanya Super Admin atau Developer yang dapat menghapus kelompok.');
         }
 
-        if ($kelompok->jamaahs()->exists()) {
-            return back()->with('error', 'Tidak dapat menghapus kelompok yang masih memiliki jamaah.');
+        $jamaahCount = $kelompok->jamaahs()->count();
+
+        if ($jamaahCount > 0) {
+            return back()->with('error', "Tidak dapat menghapus kelompok yang masih memiliki {$jamaahCount} jamaah. Hapus atau pindahkan jamaahnya terlebih dahulu.");
         }
 
         $kelompok->delete();

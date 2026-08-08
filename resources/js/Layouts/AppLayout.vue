@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import Sidebar from '@/Components/Sidebar.vue';
+import FlashMessage from '@/Components/UI/FlashMessage.vue';
 
 defineProps({
     title: String,
@@ -31,6 +32,8 @@ const roleBadgeColor = (role) => {
 <template>
     <div class="min-h-screen bg-gray-50 font-sans antialiased text-gray-900">
         <Head :title="title ? `${title} - ${$page.props.global_settings.app_name}` : $page.props.global_settings.app_name" />
+
+        <FlashMessage />
 
         <!-- Mobile Overlay -->
         <div 

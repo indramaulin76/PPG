@@ -69,18 +69,28 @@ const showDeleteModal = ref(false);
 const deleteId = ref(null);
 const deleteName = ref('');
 
-const confirmDelete = (id, name) => {
-    deleteId.value = id;
-    deleteName.value = name;
+const deleteJamaahCount = ref(0);
+
+const confirmDelete = (kelompok) => {
+    deleteId.value = kelompok.id;
+    deleteName.value = kelompok.nama_kelompok;
+    deleteJamaahCount.value = kelompok.jamaahs_count || 0;
     showDeleteModal.value = true;
 };
 
 const deleteKelompok = () => {
     router.delete(route('wilayah.kelompok.destroy', deleteId.value), {
-        onSuccess: () => {
+        // A refusal comes back as a redirect carrying flash.error, which Inertia
+        // still treats as success — so check it before closing the modal.
+        onSuccess: (page) => {
+            if (page.props.flash?.error) {
+                return;
+            }
+
             showDeleteModal.value = false;
             deleteId.value = null;
             deleteName.value = '';
+            deleteJamaahCount.value = 0;
         },
     });
 };
@@ -141,7 +151,7 @@ const deleteKelompok = () => {
                                         <button @click="openEdit(kelompok)" class="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all" title="Edit">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L12 14.207H11v-1h1l8.586-8.586z" /></svg>
                                         </button>
-                                        <button @click="confirmDelete(kelompok.id, kelompok.nama_kelompok)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
+                                        <button @click="confirmDelete(kelompok)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Hapus">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </div>
@@ -188,10 +198,23 @@ const deleteKelompok = () => {
         <!-- Delete Confirmation Modal -->
         <Modal :show="showDeleteModal" title="Hapus Kelompok" @close="showDeleteModal = false">
             <p class="text-gray-600">Apakah Anda yakin ingin menghapus kelompok "{{ deleteName }}"?</p>
+
+            <div v-if="deleteJamaahCount > 0" class="mt-3 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="text-sm text-amber-800">
+                    <p class="font-semibold">Kelompok ini belum bisa dihapus.</p>
+                    <p class="mt-1">
+                        Masih berisi <strong>{{ deleteJamaahCount }}</strong> jamaah.
+                        Hapus atau pindahkan jamaahnya terlebih dahulu.
+                    </p>
+                </div>
+            </div>
             <p class="text-sm text-red-600 mt-1">Data kelompok yang memiliki jamaa tidak bisa dihapus.</p>
             <template #footer>
                 <Button type="button" variant="secondary" @click="showDeleteModal = false">Batal</Button>
-                <Button type="button" variant="danger" @click="deleteKelompok">Hapus</Button>
+                <Button type="button" variant="danger" :disabled="deleteJamaahCount > 0" @click="deleteKelompok">Hapus</Button>
             </template>
         </Modal>
     </AppLayout>
